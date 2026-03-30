@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+*.log
+*.db
+venv/
+generated_learning_paths/
+faiss_index.bin
