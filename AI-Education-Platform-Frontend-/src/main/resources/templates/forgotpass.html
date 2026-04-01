@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">      
+    <title>Forgot Password - Vidya</title>
+    <link rel="stylesheet" href="/css/forgotpass-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <style>
+        .background-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            object-fit: contain;
+            opacity: 0.8;
+            background: #000;
+        }
+        body {
+            background: #000;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <video autoPlay loop muted playsInline class="background-video">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260314_131748_f2ca2a28-fed7-44c8-b9a9-bd9acdd5ec31.mp4" type="video/mp4" />
+    </video>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-content">
+            <a href="/" class="logo" style="color: #fff; text-decoration: none;">Vidya</a>
+            <div class="nav-actions">
+                <a href="/" class="nav-link" style="color: rgba(255,255,255,0.8);">Home</a>
+                <a href="/about" class="nav-link" style="color: rgba(255,255,255,0.8);">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="forgot-password-container">
+            <div class="forgot-password-header">
+                <h2>Reset Password</h2>
+                <p>Enter your email to reset your password</p>
+            </div>
+
+            <!-- Email and OTP Section -->
+            <div class="verification-section">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                    </div>
+                    <button type="button" id="sendOtp" class="action-btn">      
+                        <i class="fas fa-paper-plane"></i> Send OTP
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label for="otp">OTP</label>
+                    <div class="input-group">
+                        <i class="fas fa-key"></i>
+                        <input type="text" id="otp" name="otp" placeholder="Enter OTP" required>
+                    </div>
+                    <button type="button" id="verifyOtp" class="action-btn">    
+                        <i class="fas fa-check-circle"></i> Verify OTP
+                    </button>
+                </div>
+            </div>
+
+            <!-- Password Change Section (Initially Hidden) -->
+            <div class="password-section" style="display: none;">
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="newPassword" name="newPassword" placeholder="Enter new password" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>       
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm new password" required>
+                    </div>
+                </div>
+
+                <button type="button" id="updatePassword" class="action-btn">   
+                    <i class="fas fa-save"></i> Update Password
+                </button>
+            </div>
+
+            <div class="form-footer">
+                <p>Remember your password? <a href="/login">Login here</a></p>  
+            </div>
+        </div>
+    </div>
+    <script src="js/ForgotPasswordOtp.js"></script>
+</body>
+</html>

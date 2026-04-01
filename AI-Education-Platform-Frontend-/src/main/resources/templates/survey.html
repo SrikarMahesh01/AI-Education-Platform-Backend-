@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Experience Survey - Vidya</title>
+    <link rel="stylesheet" href="/css/survey_styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <video autoPlay loop muted playsInline class="background-video">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260302_085640_276ea93b-d7da-4418-a09b-2aa5b490e838.mp4" type="video/mp4" />
+    </video>
+    <div class="bg-overlay" aria-hidden="true"></div>
+
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="logo">Vidya</div>
+            <div class="nav-links">
+            </div>
+            <div class="nav-actions">
+                <a th:href="@{/logout}" class="logout-button">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="survey-container">
+            <div class="survey-header">
+                <h1>Learning Experience Survey</h1>
+                <p>Help us customize your learning journey by sharing your preferences</p>
+            </div>
+
+            <form th:action="@{/survey}" method="post" th:object="${surveyResponse}" class="survey-form">
+                <!-- Survey Progress Indicator -->
+                <div class="survey-progress">
+                    <div class="progress-step active" data-step="1">1</div>
+                    <div class="progress-step" data-step="2">2</div>
+                    <div class="progress-step" data-step="3">3</div>
+                    <div class="progress-step" data-step="4">4</div>
+                    <div class="progress-step" data-step="5">5</div>
+                    <div class="progress-step" data-step="6">6</div>
+                    <div class="progress-step" data-step="7">7</div>
+                    <div class="progress-step" data-step="8">8</div>
+                    <div class="progress-step" data-step="9">9</div>
+                    <div class="progress-step" data-step="10">10</div>
+                </div>
+
+                <!-- Professional Status -->
+                <div class="survey-step active" id="step-1">
+                    <h2>What is your current professional status?</h2>
+                    <div class="survey-options">
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{professionalStatus}" value="student" required>
+                            <span>Student</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{professionalStatus}" value="working">
+                            <span>Working Professional</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{professionalStatus}" value="unemployed">
+                            <span>Unemployed</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{professionalStatus}" value="career_changer">
+                            <span>Career Changer</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{professionalStatus}" value="entrepreneur">
+                            <span>Entrepreneur</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Learning Motivation -->
+                <div class="survey-step" id="step-2">
+                    <h2>What is your main reason for seeking to learn new skills?</h2>
+                    <div class="survey-options">
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{learningMotivation}" value="career_advancement" required>
+                            <span>Career Advancement</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{learningMotivation}" value="personal_interest">
+                            <span>Personal Interest</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{learningMotivation}" value="career_change">
+                            <span>Career Change</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{learningMotivation}" value="hobby">
+                            <span>Hobby/Personal Growth</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{learningMotivation}" value="academic">
+                            <span>Academic Requirements</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Time Availability -->
+                <div class="survey-step" id="step-3">
+                    <h2>How many hours per week can you dedicate to learning?</h2>
+                    <div class="survey-options">
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{timeAvailability}" value="less_than_5" required>
+                            <span>Less than 5 hours</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{timeAvailability}" value="5_to_10">
+                            <span>5-10 hours</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{timeAvailability}" value="10_to_15">
+                            <span>10-15 hours</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{timeAvailability}" value="more_than_15">
+                            <span>More than 15 hours</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{timeAvailability}" value="flexible">
+                            <span>Flexible schedule</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Learning Experience -->
+                <div class="survey-step" id="step-4">
+                    <h2>How would you describe your current learning experience?</h2>
+                    <div class="survey-options">
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{learningExperience}" value="beginner" required>
+                            <span>Complete Beginner</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{learningExperience}" value="some_knowledge">
+                            <span>Some Basic Knowledge</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{learningExperience}" value="intermediate">
+                            <span>Intermediate Level</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{learningExperience}" value="advanced">
+                            <span>Advanced Learner</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{learningExperience}" value="expert">
+                            <span>Expert in Field</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Preferred Learning Format -->
+                <div class="survey-step" id="step-5">
+                    <h2>Which learning format do you prefer most?</h2>
+                    <div class="survey-options">
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{preferredLearningFormat}" value="video" required>
+                            <span>Video Courses</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{preferredLearningFormat}" value="text">
+                            <span>Text-based Tutorials</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{preferredLearningFormat}" value="interactive">
+                            <span>Interactive Coding</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{preferredLearningFormat}" value="live_sessions">
+                            <span>Live Sessions</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{preferredLearningFormat}" value="mixed">
+                            <span>Mixed Format</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Learning Challenges -->
+                <div class="survey-step" id="step-6">
+                    <h2>What's your biggest challenge in learning?</h2>
+                    <div class="survey-options">
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{learningChallenges}" value="time" required>
+                            <span>Finding Time</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{learningChallenges}" value="motivation">
+                            <span>Staying Motivated</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{learningChallenges}" value="complexity">
+                            <span>Understanding Complex Concepts</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{learningChallenges}" value="practical">
+                            <span>Applying Concepts Practically</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{learningChallenges}" value="resources">
+                            <span>Finding Right Resources</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Career Field -->
+                <div class="survey-step" id="step-7">
+                    <h2>Which career field are you primarily interested in?</h2>
+                    <div class="survey-options">
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{careerField}" value="technology" required>
+                            <span>Technology & IT</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{careerField}" value="business">
+                            <span>Business & Management</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{careerField}" value="design">
+                            <span>Design & Creative</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{careerField}" value="marketing">
+                            <span>Marketing & Communications</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{careerField}" value="other">
+                            <span>Other Fields</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Online Learning Experience -->
+                <div class="survey-step" id="step-8">
+                    <h2>What's your experience with online learning?</h2>
+                    <div class="survey-options">
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{onlineLearningExperience}" value="none" required>
+                            <span>No Experience</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{onlineLearningExperience}" value="one">
+                            <span>Completed One Course</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{onlineLearningExperience}" value="multiple">
+                            <span>Completed Multiple Courses</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{onlineLearningExperience}" value="interested">
+                            <span>Interested but Haven't Started</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{onlineLearningExperience}" value="hesitant">
+                            <span>Hesitant About Online Learning</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Skill Development Goal -->
+                <div class="survey-step" id="step-9">
+                    <h2>What's your primary skill development goal?</h2>
+                    <div class="survey-options">
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{skillDevelopmentGoal}" value="career" required>
+                            <span>Career Development</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{skillDevelopmentGoal}" value="academic">
+                            <span>Academic Achievement</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{skillDevelopmentGoal}" value="hobby">
+                            <span>Personal Hobby</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{skillDevelopmentGoal}" value="entrepreneurship">
+                            <span>Entrepreneurship</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{skillDevelopmentGoal}" value="certification">
+                            <span>Professional Certification</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Tech Comfort Level -->
+                <div class="survey-step" id="step-10">
+                    <h2>How comfortable are you with technology?</h2>
+                    <div class="survey-options">
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{techComfortLevel}" value="beginner" required>
+                            <span>Beginner Level</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{techComfortLevel}" value="somewhat">
+                            <span>Somewhat Comfortable</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{techComfortLevel}" value="moderately">
+                            <span>Moderately Comfortable</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{techComfortLevel}" value="very_comfortable">
+                            <span>Very Comfortable</span>
+                        </label>
+                        <label class="survey-option">
+                            <input type="radio" th:field="*{techComfortLevel}" value="expert">
+                            <span>Expert Level</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="survey-navigation">
+                    <button type="button" class="nav-button prev-button" style="display: none;">Previous</button>
+                    <button type="button" class="nav-button next-button">Next</button>
+                    <button type="submit" class="nav-button submit-button" style="display: none;">Complete Survey</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/SurveyFormJS.js"></script>
+</body>
+</html>

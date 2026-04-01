@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vidya - User Login</title>
+    <link rel="stylesheet" href="/css/login_styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .background-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            object-fit: contain;
+            opacity: 0.8;
+            background: #000;
+        }
+        body {
+            background: #000;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <video autoPlay loop muted playsInline class="background-video">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260314_131748_f2ca2a28-fed7-44c8-b9a9-bd9acdd5ec31.mp4" type="video/mp4" />
+    </video>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-content">
+            <a href="/" class="logo" style="color: #fff; text-decoration: none;">Vidya</a>
+            <div class="nav-actions">
+                <a th:href="@{/}" class="nav-link" style="color: rgba(255,255,255,0.8);">Home</a>
+                <a th:href="@{/about}" class="nav-link" style="color: rgba(255,255,255,0.8);">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="login-container">
+            <div class="login-header">
+                <h2>Welcome Back</h2>
+                <p>Sign in to continue your learning journey</p>
+            </div>
+
+            <form action="/login" method="post" class="login-form">
+                <div class="alert alert-danger" id="error-message" style="display: none;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    Invalid username or password.
+                </div>
+
+                <div class="alert alert-info" id="logout-message" style="display: none;">
+                    <i class="fas fa-info-circle"></i>
+                    You have been logged out.
+                </div>
+
+                <div class="form-group">
+                    <label for="username">Email</label>
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="username" name="username" 
+                               placeholder="Enter your email" required autofocus>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" name="password" 
+                               placeholder="Enter your password" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
+
+                <div class="form-footer">
+                    <p>Don't have an account? <a th:href="@{/registration}">Sign Up</a></p>
+                    <p>Forgot Password? <a th:href="@{/forgot-password}">Reset here</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('error')) {
+            document.getElementById('error-message').style.display = 'block';
+        }
+        if (urlParams.has('logout')) {
+            document.getElementById('logout-message').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

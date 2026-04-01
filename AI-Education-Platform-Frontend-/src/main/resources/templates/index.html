@@ -1,0 +1,739 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Recommendations - Vidya</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --surface: rgba(255, 255, 255, 0.46);
+            --surface-soft: rgba(255, 255, 255, 0.28);
+            --surface-strong: rgba(255, 255, 255, 0.44);
+            --text-primary: #1f2d44;
+            --text-secondary: rgba(31, 45, 68, 0.78);
+            --accent: #5a7dff;
+            --accent-strong: #61b7ff;
+            --border: rgba(255, 255, 255, 0.72);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #eef3ff;
+            min-height: 100vh;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        .background-video {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at 16% 18%, rgba(95, 144, 255, 0.1), transparent 42%),
+                radial-gradient(circle at 84% 80%, rgba(97, 183, 255, 0.08), transparent 40%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.14) 100%);
+        }
+
+        .navbar {
+            background-color: rgba(255, 255, 255, 0.32);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow: 0 8px 24px rgba(31, 45, 68, 0.12);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.75);
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 10;
+        }
+
+        .nav-content {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: 0.5px;
+            font-family: 'Instrument Serif', serif;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .logout-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            background: rgba(255, 255, 255, 0.56);
+            border: 1px solid rgba(255, 255, 255, 0.92);
+            color: var(--text-primary);
+            padding: 0.58rem 1.5rem;
+            border-radius: 30px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 15px rgba(31, 45, 68, 0.13);
+        }
+
+        .logout-button:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.78);
+            box-shadow: 0 8px 20px rgba(31, 45, 68, 0.16);
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            padding: 108px 1rem 2rem;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .index-container {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 2.2rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 48px rgba(31, 45, 68, 0.14);
+            width: 100%;
+            max-width: 1080px;
+            transition: transform 0.3s ease;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .index-container:hover {
+            transform: translateY(-3px);
+        }
+
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 0 1rem;
+        }
+
+        .welcome-section h1 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.9rem;
+        }
+
+        .welcome-section p {
+            color: var(--text-secondary);
+            font-size: 0.96rem;
+        }
+
+        .course-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .course-card {
+            background: var(--surface-soft);
+            border: 1px solid rgba(255, 255, 255, 0.78);
+            border-radius: 15px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
+        }
+
+        .course-card:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.46);
+            box-shadow: 0 8px 20px rgba(31, 45, 68, 0.14);
+        }
+
+        .course-card.selected {
+            border-color: rgba(95, 144, 255, 0.8);
+            background: rgba(90, 125, 255, 0.2);
+            box-shadow: 0 0 0 2px rgba(90, 125, 255, 0.16);
+        }
+
+        .course-content {
+            padding: 1.5rem;
+        }
+
+        .course-title {
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            margin-bottom: 0.85rem;
+            font-weight: 600;
+        }
+
+        .course-title .course-id {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-right: 0.5rem;
+            font-weight: 400;
+        }
+
+        .course-description {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            line-height: 1.45;
+        }
+
+        .course-confidence {
+            margin-bottom: 1rem;
+        }
+
+        .confidence-bar {
+            margin-top: 0.45rem;
+            background-color: rgba(255, 255, 255, 0.48);
+            border: 1px solid rgba(255, 255, 255, 0.75);
+            height: 7px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+
+        .confidence-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .select-course-btn {
+            width: 100%;
+            padding: 0.72rem;
+            background: rgba(255, 255, 255, 0.56);
+            border: 1px solid rgba(255, 255, 255, 0.92);
+            color: var(--text-primary);
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(31, 45, 68, 0.11);
+        }
+
+        .select-course-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 6px 20px rgba(31, 45, 68, 0.16);
+        }
+
+        .select-course-btn:disabled {
+            background: rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.6);
+            color: rgba(31, 45, 68, 0.45);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .selected-courses {
+            background: var(--surface-soft);
+            border: 1px solid rgba(255, 255, 255, 0.78);
+            padding: 1.5rem;
+            border-radius: 16px;
+            margin-top: 1rem;
+        }
+
+        .selected-courses h2 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .selected-course-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.82rem 0.9rem;
+            background: rgba(255, 255, 255, 0.52);
+            margin: 0.5rem 0;
+            border-radius: 10px;
+            transition: background-color 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.82);
+        }
+
+        .selected-course-item:hover {
+            background: rgba(255, 255, 255, 0.72);
+        }
+
+        .remove-button {
+            background: none;
+            border: none;
+            color: #26406e;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .remove-button:hover {
+            background-color: rgba(95, 144, 255, 0.16);
+            color: #10294d;
+        }
+
+        .continue-button {
+            width: 100%;
+            max-width: 340px;
+            margin: 2rem auto 0;
+            padding: 0.82rem 1rem;
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            color: rgba(31, 45, 68, 0.45);
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: default;
+            transition: all 0.3s ease;
+            box-shadow: none;
+        }
+
+        .continue-button.active {
+            background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+            border-color: transparent;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(31, 45, 68, 0.16);
+        }
+
+        .continue-button.active:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(31, 45, 68, 0.2);
+        }
+
+        .course-selection-container {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .error-message, .no-courses-message {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.82);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            max-width: 600px;
+            margin: 2rem auto;
+            box-shadow: 0 8px 24px rgba(31, 45, 68, 0.12);
+        }
+
+        .error-message h3, .no-courses-message h3 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .error-message ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 1rem 0;
+            color: var(--text-secondary);
+        }
+
+        .error-message button, .no-courses-message button {
+            background: rgba(255, 255, 255, 0.56);
+            border: 1px solid rgba(255, 255, 255, 0.92);
+            color: var(--text-primary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 30px;
+            margin-top: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .error-message button:hover, .no-courses-message button:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 6px 20px rgba(31, 45, 68, 0.16);
+        }
+
+        .spinner {
+            width: 36px;
+            height: 36px;
+            margin: 12px auto 0;
+            border: 4px solid rgba(90, 125, 255, 0.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 96px 0.85rem 1.2rem;
+            }
+
+            .index-container {
+                padding: 1.45rem 0.85rem;
+            }
+
+            .course-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .welcome-section h1 {
+                font-size: 1.45rem;
+            }
+
+            .selected-courses {
+                padding: 1.5rem;
+            }
+
+            .nav-content {
+                padding: 0 1rem;
+            }
+        }
+    </style>
+</head>
+<body th:attr="data-user-id=${userId}">
+    <video autoPlay loop muted playsInline class="background-video">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260302_085640_276ea93b-d7da-4418-a09b-2aa5b490e838.mp4" type="video/mp4" />
+    </video>
+    <div class="bg-overlay" aria-hidden="true"></div>
+
+    <input type="hidden" id="current-user-id" th:value="${userId}" />
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="logo">Vidya</div>
+            <div class="nav-actions">
+                <a th:href="@{/logout}" class="logout-button">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="index-container">
+            <div class="welcome-section">
+                <h1>Choose Your Recommended Courses</h1>
+                <p>Select up to three courses based on your quiz and survey profile.</p>
+            </div>
+            
+            <div class="course-selection-container">
+                <div id="courseGrid" class="course-grid">
+                    <!-- Course cards will be dynamically loaded here -->
+                </div>
+                
+                <!-- Continue Button -->
+                <button id="continueWithSelectedCourses" class="continue-button">
+                    Continue with Selected Courses
+                </button>
+            </div>
+
+            <div class="selected-courses">
+                <h2>Selected Courses</h2>
+                <div id="selectedCoursesList">
+                    <!-- Selected courses will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        let selectedCourses = [];
+        const maxSelectedCourses = 3;
+        const continueButton = document.getElementById('continueWithSelectedCourses');
+
+        async function loadCourses() {
+            const courseGrid = document.getElementById('courseGrid');
+            try {
+                const userId = document.getElementById('current-user-id').value;
+                console.log('Loading courses for user:', userId);
+                
+                // Add timestamp to prevent caching
+                const timestamp = new Date().getTime();
+                const url = `/api/courses/suggestions/${userId}?t=${timestamp}`;
+                console.log('Fetching from URL:', url);
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Full response data:', data);
+                console.log('Recommendations:', data.recommendations);
+                
+                // Debugging: Check if recommendations exist and log their details
+                if (!data.recommendations || data.recommendations.length === 0) {
+                    console.error('No recommendations found in the response');
+                    console.error('Full response:', JSON.stringify(data, null, 2));
+                    courseGrid.innerHTML = `
+                        <div class="no-courses-message">
+                            <p>No course recommendations available for this user.</p>
+                            <button onclick="window.location.reload()">Generate Recommended Courses</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const recommendations = data.recommendations;
+
+                courseGrid.innerHTML = '';  // Clear existing content
+
+                recommendations.forEach(course => {
+                    const confidence = Math.max(0, Math.min(100, Number(course.confidence_score || 0)));
+                    const courseCard = document.createElement('div');
+                    courseCard.className = 'course-card';
+                    courseCard.setAttribute('data-course-id', course.id);
+                    courseCard.innerHTML = `
+                        <div class="course-content">
+                            <h3 class="course-title">
+                                <span class="course-id">[ID: ${course.id}]</span> 
+                                ${course.title}
+                            </h3>
+                            <p class="course-description">${course.description}</p>
+                            <div class="course-confidence">
+                                <div class="confidence-label">Confidence Score: ${confidence}%</div>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" style="width: ${confidence}%"></div>
+                                </div>
+                            </div>
+                            <button onclick="selectCourse('${course.id}', '${course.title.replace(/'/g, "\\'")}')"
+                                    class="select-course-btn"
+                                    data-course-id="${course.id}"
+                                    ${selectedCourses.length >= maxSelectedCourses ? 'disabled' : ''}>
+                                Select Course
+                            </button>
+                        </div>
+                    `;
+                    courseGrid.appendChild(courseCard);
+                });
+            } catch (error) {
+                console.error('Error loading courses:', error);
+                courseGrid.innerHTML = `
+                    <div class="error-message">
+                        <p>Courses Currently Getting Generated. reload the page or try to log out and log back in.</p>
+                        <button onclick="loadCourses()">Reload</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Load courses when the page loads
+        document.addEventListener('DOMContentLoaded', loadCourses);
+
+        function selectCourse(courseId, courseTitle) {
+            // Check if course is already selected
+            if (selectedCourses.some(course => course.id === courseId)) {
+                // Remove course if already selected
+                selectedCourses = selectedCourses.filter(course => course.id !== courseId);
+                const courseButton = document.querySelector(`.select-course-btn[data-course-id="${courseId}"]`);
+                const courseCard = document.querySelector(`.course-card[data-course-id="${courseId}"]`);
+                if (courseButton) {
+                    courseButton.textContent = 'Select Course';
+                }
+                if (courseCard) {
+                    courseCard.classList.remove('selected');
+                }
+            } else {
+                // Add course if not at max limit
+                if (selectedCourses.length < maxSelectedCourses) {
+                    selectedCourses.push({ id: courseId, title: courseTitle });
+                    const courseButton = document.querySelector(`.select-course-btn[data-course-id="${courseId}"]`);
+                    const courseCard = document.querySelector(`.course-card[data-course-id="${courseId}"]`);
+                    if (courseButton) {
+                        courseButton.textContent = 'Deselect Course';
+                    }
+                    if (courseCard) {
+                        courseCard.classList.add('selected');
+                    }
+                } else {
+                    alert('You can only select up to 3 courses.');
+                    return;
+                }
+            }
+
+            // Update selected courses list
+            updateSelectedCoursesList();
+
+            // Manage continue button state
+            manageContinueButton();
+        }
+
+        function removeCourse(index) {
+            const removedCourse = selectedCourses[index];
+            selectedCourses.splice(index, 1);
+            
+            // Update select button for the removed course
+            const courseButton = document.querySelector(`.select-course-btn[data-course-id="${removedCourse.id}"]`);
+            const courseCard = document.querySelector(`.course-card[data-course-id="${removedCourse.id}"]`);
+            if (courseButton) {
+                courseButton.textContent = 'Select Course';
+            }
+            if (courseCard) {
+                courseCard.classList.remove('selected');
+            }
+
+            updateSelectedCoursesList();
+
+            // Manage continue button state
+            manageContinueButton();
+        }
+
+        function manageContinueButton() {
+            // Activate button only if at least one course is selected
+            if (selectedCourses.length > 0) {
+                continueButton.classList.add('active');
+                continueButton.disabled = false;
+            } else {
+                continueButton.classList.remove('active');
+                continueButton.disabled = true;
+            }
+        }
+
+        // Add event listener for continue button
+        continueButton.addEventListener('click', function() {
+            // Only proceed if button is active (has at least one course)
+            if (!this.classList.contains('active')) {
+                return; // Do nothing if no courses selected
+            }
+
+            // Prepare selected courses data
+            const selectedCoursesData = {
+                userId: document.getElementById('current-user-id').value,
+                courseIds: selectedCourses.map(course => course.id.toString()) // Convert to string
+            };
+
+            // Create a loading overlay
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.style.position = 'fixed';
+            loadingOverlay.style.top = '0';
+            loadingOverlay.style.left = '0';
+            loadingOverlay.style.width = '100%';
+            loadingOverlay.style.height = '100%';
+            loadingOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            loadingOverlay.style.display = 'flex';
+            loadingOverlay.style.justifyContent = 'center';
+            loadingOverlay.style.alignItems = 'center';
+            loadingOverlay.style.zIndex = '1000';
+            loadingOverlay.innerHTML = `
+                <div style="background-color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                    <h2>Preparing Learning Paths</h2>
+                    <p>This may take a few minutes. Please do not close the page.</p>
+                    <div class="spinner"></div>
+                </div>
+            `;
+            document.body.appendChild(loadingOverlay);
+
+            // Verify learning paths
+            fetch('/verify-learning-paths', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userId: document.getElementById('current-user-id').value,
+                    courseIds: selectedCourses.map(course => course.id.toString()) // Convert to string
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(allPathsExist => {
+                // Remove loading overlay
+                document.body.removeChild(loadingOverlay);
+
+                if (allPathsExist) {
+                    // Show success alert
+                    alert('Learning paths for all recommended courses have been successfully downloaded!');
+                    
+                    // Redirect to home
+                    window.location.href = '/home';
+                } else {
+                    // Show error message if paths could not be downloaded
+                    alert('Unable to download learning paths. Please check your internet connection or try again later.');
+                }
+            })
+            .catch(error => {
+                // Remove loading overlay
+                if (loadingOverlay.parentNode) {
+                    document.body.removeChild(loadingOverlay);
+                }
+
+                console.error('Error:', error);
+                alert('An error occurred while processing your course selection.');
+            });
+        });
+
+        // Initialize continue button state on page load
+        document.addEventListener('DOMContentLoaded', manageContinueButton);
+
+        function updateSelectedCoursesList() {
+            const list = document.getElementById('selectedCoursesList');
+            list.innerHTML = selectedCourses.map((course, index) => `
+                <div class="selected-course-item">
+                    <span>${course.title}</span>
+                    <button class="remove-button" onclick="removeCourse(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+[ {
+  "careerField" : "technology",
+  "learningMotivation" : "career_advancement",
+  "preferredLearningFormat" : "mixed",
+  "professionalStatus" : "student",
+  "skillDevelopmentGoal" : "career",
+  "timeAvailability" : "flexible",
+  "learningChallenges" : "motivation",
+  "id" : 1,
+  "onlineLearningExperience" : "multiple",
+  "userId" : 1,
+  "learningExperience" : "intermediate",
+  "techComfortLevel" : "very_comfortable"
+}, {
+  "careerField" : "technology",
+  "learningMotivation" : "career_advancement",
+  "preferredLearningFormat" : "mixed",
+  "professionalStatus" : "student",
+  "skillDevelopmentGoal" : "career",
+  "timeAvailability" : "less_than_5",
+  "learningChallenges" : "motivation",
+  "id" : 3,
+  "onlineLearningExperience" : "multiple",
+  "userId" : 3,
+  "learningExperience" : "beginner",
+  "techComfortLevel" : "very_comfortable"
+} ]

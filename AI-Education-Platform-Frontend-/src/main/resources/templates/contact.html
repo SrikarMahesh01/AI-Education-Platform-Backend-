@@ -1,0 +1,84 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">      
+    <title>Contact - Vidya</title>
+    <link rel="stylesheet" href="/css/login_styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .background-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            object-fit: contain;
+            opacity: 0.8;
+            background: #000;
+        }
+        body {
+            background: #000;
+            color: #fff;
+        }
+        /* Custom styles for contact inside the login container format */
+        .contact-image {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .contact-image i {
+            font-size: 4rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        .single-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: rgba(255,255,255,0.8);
+            margin-top: 1.5rem;
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+    </style>
+</head>
+<body>
+    <video autoPlay loop muted playsInline class="background-video">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260314_131748_f2ca2a28-fed7-44c8-b9a9-bd9acdd5ec31.mp4" type="video/mp4" />
+    </video>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-content">
+            <a href="/" class="logo" style="color: #fff; text-decoration: none;">Vidya</a>
+            <div class="nav-actions">
+                <a th:href="@{/}" class="nav-link" style="color: rgba(255,255,255,0.8);">Home</a>
+                <a th:href="@{/about}" class="nav-link" style="color: rgba(255,255,255,0.8);">About</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content matching Login styling perfectly -->
+    <div class="main-container">
+        <div class="login-container" style="text-align: center; margin-bottom: 4rem;">
+            <div class="login-header">
+                <h2>Get in Touch</h2>
+                <p>Reach out to the lead developer</p>
+            </div>
+
+            <div class="contact-image">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <h3 style="margin-bottom: 0px; font-size: 1.4rem;">Yarlagadda Srikar Mahesh</h3>
+            <div class="single-info">
+                <i class="fas fa-envelope"></i> 
+                <span style="font-size: 1rem;">dell.123456.b@gmail.com</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

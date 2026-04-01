@@ -1,0 +1,159 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">      
+    <title>About - Vidya</title>
+    <link rel="stylesheet" href="/css/login_styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            margin: 0;
+            overflow: hidden; /* Removing the scrolling for the about page */
+        }
+        .background-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            object-fit: contain;
+            opacity: 0.8;
+            background: #000;
+        }
+
+        /* 2x2 Grid Style Restored (nxn boxes) */
+        .about-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100%;
+            padding-top: 60px; /* Accounts for navbar */
+        }
+
+        .about-container {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            backdrop-filter: blur(5px) !important;
+            border-radius: 20px;
+            max-width: 900px;
+            width: 90%;
+            padding: 2rem !important;
+            text-align: center;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .title-pill-box {
+            display: inline-block;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 50px;
+            padding: 8px 35px;
+            margin-bottom: 2rem;
+            background: transparent;
+        }
+        .title-pill-box h1 {
+            color: white !important;
+            font-size: 1.5rem;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .about-section {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            text-align: left;
+        }
+        .section-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 1.5rem !important;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .section-card:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.3);
+        }
+        .section-card i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        .section-card h2 {
+            color: white !important;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+        .section-card p {
+            color: rgba(255,255,255,0.8) !important;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <video autoPlay loop muted playsInline class="background-video">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260314_131748_f2ca2a28-fed7-44c8-b9a9-bd9acdd5ec31.mp4" type="video/mp4" />
+    </video>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-content">
+            <a href="/" class="logo" style="color: #fff; text-decoration: none;">Vidya</a>
+            <div class="nav-actions">
+                <a th:href="@{/}" class="nav-link" style="color: rgba(255,255,255,0.8);">Home</a>
+                <a th:href="@{/contact}" class="nav-link" style="color: rgba(255,255,255,0.8);">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Restored to 2x2 Grid Frame -->
+    <div class="about-wrap">
+        <div class="about-container">
+
+            <div class="title-pill-box">
+                <h1>About Vidya</h1>
+            </div>
+
+            <div class="about-section">
+                <div class="section-card">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h2>Our Mission</h2>
+                    <p>Vidya makes education accessible. We provide personalized course recommendations so students learn at their own pace.</p>
+                </div>
+
+                <div class="section-card">
+                    <i class="fas fa-book-reader"></i>
+                    <h2>How It Works</h2>
+                    <p>Browse courses, track progress on our dashboard. Our platform adapts and gives recommendations based on interests.</p>
+                </div>
+
+                <div class="section-card">
+                    <i class="fas fa-trophy"></i>
+                    <h2>Achievement System</h2>
+                    <p>Earn badges and certificates as you hit milestones. Track accomplishments on your personalized profile.</p>
+                </div>
+
+                <div class="section-card">
+                    <i class="fas fa-users"></i>
+                    <h2>Community Learning</h2>
+                    <p>Join fellow learners, share experiences, and collaborate effectively with knowledge sharing tools.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
+

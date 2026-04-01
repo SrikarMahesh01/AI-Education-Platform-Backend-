@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error Page</title>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #000;
+            min-height: 100vh;
+            margin: 0;
+            color: #fff;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .background-video {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: 0;
+            background: #000;
+            filter: brightness(0.82) saturate(0.96);
+            pointer-events: none;
+        }
+
+        .page-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            background: linear-gradient(180deg, rgba(8, 14, 28, 0.2), rgba(8, 14, 28, 0.48));
+        }
+
+        .error-page {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.4rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .error-container {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1.5px solid rgba(255, 255, 255, 0.72);
+            border-radius: 24px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 2rem 1.5rem;
+            max-width: 680px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .brand {
+            font-family: 'Instrument Serif', serif;
+            font-size: 2rem;
+            line-height: 1;
+            margin-bottom: 0.8rem;
+            color: #fff;
+        }
+
+        .error-icon {
+            color: #ffb4b4;
+            font-size: 3.2rem;
+            margin-bottom: 0.9rem;
+        }
+
+        .error-title {
+            font-size: 2rem;
+            line-height: 1.1;
+            margin-bottom: 0.7rem;
+            color: #fff;
+        }
+
+        .error-message {
+            color: rgba(255, 255, 255, 0.86);
+            margin: 0 auto 1.1rem;
+            max-width: 560px;
+            word-break: break-word;
+            font-size: 0.96rem;
+            line-height: 1.55;
+        }
+
+        .error-subtext {
+            color: rgba(255, 255, 255, 0.72);
+            margin: 0 auto 1.3rem;
+            max-width: 560px;
+            font-size: 0.84rem;
+        }
+
+        .error-details {
+            background: rgba(9, 14, 25, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 0.9rem;
+            margin-bottom: 1.1rem;
+            text-align: left;
+            font-family: monospace;
+            color: rgba(255, 255, 255, 0.84);
+            white-space: pre-wrap;
+            word-break: break-word;
+            display: none;
+            max-height: 220px;
+            overflow: auto;
+        }
+
+        .error-details.show {
+            display: block;
+        }
+
+        .home-button {
+            display: inline-block;
+            padding: 0.68rem 1.25rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 999px;
+            border: 1.4px solid rgba(255, 255, 255, 0.82);
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .home-button:hover {
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .toggle-details {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.72);
+            cursor: pointer;
+            text-decoration: underline;
+            margin-bottom: 0.75rem;
+            font-size: 0.82rem;
+        }
+
+        @media (max-width: 650px) {
+            .error-container {
+                padding: 1.55rem 1rem;
+                border-radius: 18px;
+            }
+
+            .brand {
+                font-size: 1.75rem;
+            }
+
+            .error-title {
+                font-size: 1.55rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <video autoPlay loop muted playsInline class="background-video">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260324_151826_c7218672-6e92-402c-9e45-f1e0f454bdc4.mp4" type="video/mp4" />
+    </video>
+    <div class="page-overlay"></div>
+
+    <main class="error-page">
+        <div class="error-container">
+            <div class="brand">Vidya</div>
+            <i class="fas fa-exclamation-circle error-icon"></i>
+            <h1 class="error-title" th:text="${errorTitle != null ? errorTitle : 'Course Not Available'}">Course Not Available</h1>
+            <p class="error-message" th:text="${errorMessage != null ? errorMessage : (error != null ? error : 'The requested course content is not available right now.')}">The requested course content is not available right now.</p>
+
+            <div th:if="${errorDetails != null}">
+                <button class="toggle-details" onclick="toggleDetails()">Show Technical Details</button>
+                <pre class="error-details" th:text="${errorDetails}"></pre>
+            </div>
+
+            <a href="/home" class="home-button"><i class="fas fa-home"></i> Return to Home</a>
+        </div>
+    </main>
+
+    <script>
+        function toggleDetails() {
+            const details = document.querySelector('.error-details');
+            const button = document.querySelector('.toggle-details');
+            if (details.classList.contains('show')) {
+                details.classList.remove('show');
+                button.textContent = 'Show Technical Details';
+            } else {
+                details.classList.add('show');
+                button.textContent = 'Hide Technical Details';
+            }
+        }
+    </script>
+</body>
+</html>

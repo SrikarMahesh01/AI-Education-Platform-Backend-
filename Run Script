@@ -1,0 +1,6 @@
+Backend
+cd C:\Users\srika\OneDrive\Desktop\YSM\Code\AI-Education-Platform\AI-Education-Platform-Backend-
+ .\venv\Scripts\python.exe -m uvicorn learning_assessment_server:app --host 0.0.0.0 --port 8000 --reload
+Frontend
+cd C:\Users\srika\OneDrive\Desktop\YSM\Code\AI-Education-Platform\AI-Education-Platform-Frontend-
+ .\mvnw.cmd spring-boot:run

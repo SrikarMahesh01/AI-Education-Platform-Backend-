@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vidya - Course Recommendations</title>
+    <link rel="stylesheet" href="/css/login_styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        html,
+        body {
+            width: 100%;
+            min-height: 100%;
+            margin: 0;
+            background: #000;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: #fff;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .background-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: 0;
+            pointer-events: none;
+            background: #000;
+            filter: brightness(0.58) saturate(0.92);
+        }
+
+        .video-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background: linear-gradient(180deg, rgba(4, 8, 18, 0.34) 0%, rgba(4, 8, 18, 0.5) 55%, rgba(4, 8, 18, 0.65) 100%);
+        }
+
+        .navbar {
+            display: block !important;
+            position: fixed !important;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1200;
+            background-color: rgba(8, 14, 28, 0.52) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18) !important;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 1rem 0 !important;
+        }
+
+        .nav-content {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem !important;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem !important;
+            font-weight: 700 !important;
+            color: #fff !important;
+            letter-spacing: 0.5px;
+            text-decoration: none;
+            font-family: 'Instrument Serif', serif;
+            -webkit-text-fill-color: #fff !important;
+            line-height: 1;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem !important;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.82);
+            text-decoration: none;
+            font-size: 0.86rem;
+            font-weight: 500;
+            line-height: 1;
+            white-space: nowrap;
+            padding: 0.45rem 0.9rem;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            background: transparent;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.34);
+        }
+
+        .nav-link.active {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.56);
+        }
+
+        .page-wrap {
+            position: relative;
+            z-index: 2;
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 90px 18px 36px;
+            min-height: 100vh;
+        }
+
+        .recommendations-container {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border: 1.5px solid rgba(255, 255, 255, 0.75);
+            border-radius: 24px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.24);
+            padding: 1.4rem;
+        }
+
+        .recommendations-header {
+            margin-bottom: 1rem;
+        }
+
+        .recommendations-header h2 {
+            color: #fff;
+            font-size: 1.45rem;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .recommendations-header p {
+            color: rgba(255, 255, 255, 0.76);
+            margin: 0.45rem 0 0;
+            font-size: 0.95rem;
+        }
+
+        .course-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 0.95rem;
+            margin-top: 1.1rem;
+        }
+
+        .course-card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.32);
+            border-radius: 14px;
+            box-shadow: none;
+            padding: 1rem;
+            transition: all 0.22s ease;
+        }
+
+        .course-card:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .course-title {
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            line-height: 1.35;
+        }
+
+        .course-description {
+            color: rgba(255, 255, 255, 0.86);
+            margin-bottom: 0.75rem;
+            line-height: 1.55;
+            font-size: 0.92rem;
+        }
+
+        .confidence-score {
+            color: rgba(255, 255, 255, 0.83);
+            font-weight: 500;
+            margin-bottom: 0.8rem;
+            font-size: 0.9rem;
+        }
+
+        .select-button {
+            width: 100%;
+            padding: 0.65rem 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            border: 1.4px solid rgba(255, 255, 255, 0.85);
+            border-radius: 999px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .select-button:hover:not(.disabled) {
+            background: rgba(255, 255, 255, 0.18);
+            transform: translateY(-1px);
+        }
+
+        .replace-button {
+            margin-top: 0.55rem;
+        }
+
+        .select-button.disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .no-recommendations {
+            margin-top: 1.1rem;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px dashed rgba(255, 255, 255, 0.38);
+            border-radius: 14px;
+            text-align: center;
+            padding: 1.2rem;
+            color: rgba(255, 255, 255, 0.86);
+        }
+
+        .no-recommendations i {
+            font-size: 1.15rem;
+            margin-right: 0.5rem;
+            color: #ffd86b;
+        }
+
+        @media (max-width: 980px) {
+            .nav-content {
+                padding: 0 1rem;
+            }
+
+            .logo {
+                font-size: 1.6rem;
+            }
+
+            .page-wrap {
+                padding: 86px 12px 26px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .nav-content {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 0.7rem;
+            }
+
+            .nav-actions {
+                width: 100%;
+            }
+
+            .nav-link {
+                font-size: 0.8rem;
+            }
+
+            .recommendations-container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <video autoPlay loop muted playsInline class="background-video">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260324_151826_c7218672-6e92-402c-9e45-f1e0f454bdc4.mp4" type="video/mp4" />
+    </video>
+    <div class="video-overlay"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-content">
+            <a href="/" class="logo">Vidya</a>
+            <div class="nav-actions">
+                <a th:href="@{/home}" class="nav-link">Dashboard</a>
+                <a th:href="@{/course/recommendations}" class="nav-link active">Recommendations</a>
+                <a th:href="@{/about}" class="nav-link">About</a>
+                <a th:href="@{/contact}" class="nav-link">Contact</a>
+            </div>
+        </div>
+    </nav>
+    <main class="page-wrap">
+        <div class="recommendations-container">
+            <div class="recommendations-header">
+                <h2>Course Recommendations</h2>
+                <p>Personalized course suggestions based on your interests</p>
+            </div>
+
+            <div th:if="${not #lists.isEmpty(recommendations)}" class="course-grid">
+                <div th:each="course : ${recommendations}" class="course-card">
+                    <h3 class="course-title" th:text="${course.title}">Course Title</h3>
+                    <p class="course-description" th:text="${course.description}">Course Description</p>
+                    <p class="confidence-score">
+                        Match Score: <span th:text="${course.confidenceScore + '%'}">70%</span>
+                    </p>
+                    
+                    <!-- Show regular select button if there are empty slots -->
+                    <form th:if="${hasEmptySlot}" th:action="@{/course/select-course}" method="post">
+                        <input type="hidden" name="courseId" th:value="${course.id}" />
+                        <button type="submit" class="select-button">Select Course</button>
+                    </form>
+                    
+                    <!-- Show replace button if there's a completed course -->
+                    <form th:if="${!hasEmptySlot and hasCompletedCourse}" th:action="@{/course/select-course}" method="post">
+                        <input type="hidden" name="courseId" th:value="${course.id}" />
+                        <input type="hidden" name="replaceCompleted" value="true" />
+                        <button type="submit" class="select-button replace-button">
+                            Replace Completed Course
+                        </button>
+                    </form>
+                    
+                    <!-- Show disabled button if no slots available and no completed courses -->
+                    <button th:if="${!hasEmptySlot and !hasCompletedCourse}" 
+                            class="select-button disabled" 
+                            disabled
+                            title="Complete a course to unlock more slots">
+                        No Available Slots
+                    </button>
+                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(recommendations)}" class="no-recommendations">
+                <i class="fas fa-book-reader"></i>
+                <p>You're currently enrolled in the maximum number of courses.<br>Complete some of your current courses to get new recommendations!</p>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>

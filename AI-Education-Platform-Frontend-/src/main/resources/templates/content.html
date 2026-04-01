@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Content - Vidya</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        html,
+        body {
+            width: 100%;
+            min-height: 100%;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            line-height: 1.5;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .background-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -2;
+            object-fit: contain;
+            opacity: 0.8;
+            background: #000;
+        }
+
+        .page-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: linear-gradient(180deg, rgba(8, 14, 28, 0.5), rgba(8, 14, 28, 0.72));
+        }
+
+        .navbar {
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            background: rgba(8, 14, 28, 0.54);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 1rem 0;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 1rem;
+            padding: 0 1rem;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            justify-self: start;
+        }
+
+        .nav-center {
+            justify-self: center;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-right {
+            justify-self: end;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-brand {
+            color: white;
+            font-size: 2rem;
+            line-height: 1;
+            font-weight: 700;
+            text-decoration: none;
+            font-family: 'Instrument Serif', serif;
+            letter-spacing: 0.4px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.7rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.95rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            background: rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 0.88rem;
+        }
+
+        .nav-link:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .profile-dropdown {
+            position: relative;
+        }
+
+        .profile-trigger {
+            background: transparent;
+            border: 0;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .profile-picture {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+
+        .profile-picture img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-picture i {
+            font-size: 1rem;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 10px);
+            min-width: 190px;
+            background: rgba(14, 20, 35, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 14px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 12px 34px rgba(0, 0, 0, 0.36);
+            padding: 0.35rem;
+            display: none;
+            z-index: 1200;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            width: 100%;
+            text-decoration: none;
+            color: #fff;
+            border: none;
+            background: transparent;
+            text-align: left;
+            padding: 0.58rem 0.72rem;
+            font-size: 0.88rem;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.2);
+            margin: 0.2rem 0;
+        }
+
+        .content-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 96px 1rem 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .back-button {
+            display: inline-block;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .back-button:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .content-header {
+            background: rgba(255, 255, 255, 0.07);
+            padding: 1.5rem;
+            border-radius: 18px;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.26);
+            border: 1.5px solid rgba(255, 255, 255, 0.68);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            margin-bottom: 1.5rem;
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .content-path {
+            color: rgba(255, 255, 255, 0.74);
+            font-size: 0.875rem;
+        }
+
+        .tutorial-section {
+            background: rgba(255, 255, 255, 0.07);
+            padding: 2rem;
+            border-radius: 18px;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.24);
+            border: 1.5px solid rgba(255, 255, 255, 0.68);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: #fff;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+        }
+
+        .section-content {
+            color: rgba(255, 255, 255, 0.86);
+            line-height: 1.7;
+            white-space: pre-wrap;
+        }
+
+        pre {
+            background: #282c34;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.875rem;
+        }
+
+        code {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.875rem;
+        }
+
+        .section-metadata {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .metadata-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .metadata-icon {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .key-takeaways {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-left: 4px solid rgba(255, 255, 255, 0.8);
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+
+        .output-block {
+            background: rgba(20, 25, 38, 0.92);
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        .action-button {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            text-decoration: none;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            margin-bottom: 1rem;
+            border: 1.4px solid rgba(255, 255, 255, 0.78);
+        }
+
+        .action-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .complete-button {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(127, 228, 166, 0.9);
+            color: #09241a;
+            border: none;
+            border-radius: 999px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 100;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+        }
+
+        .complete-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .complete-button:active {
+            transform: translateY(0);
+        }
+
+        .complete-button.completed {
+            background: rgba(255, 255, 255, 0.4);
+            color: #fff;
+            cursor: default;
+        }
+
+        .complete-button .icon {
+            font-size: 1.25rem;
+        }
+
+        @keyframes checkmark {
+            0% {
+                transform: scale(0);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .complete-button.completed .icon {
+            animation: checkmark 0.3s ease-in-out;
+        }
+
+        @media (max-width: 768px) {
+            .nav-container {
+                padding: 0 0.8rem;
+                gap: 0.55rem;
+            }
+
+            .nav-link {
+                padding: 0.45rem 0.8rem;
+                font-size: 0.82rem;
+            }
+
+            .nav-brand {
+                font-size: 1.65rem;
+            }
+
+            .profile-picture {
+                width: 38px;
+                height: 38px;
+            }
+
+            .dropdown-menu {
+                min-width: 170px;
+            }
+
+            .content-container {
+                padding-top: 84px;
+            }
+
+            .tutorial-section {
+                padding: 1.2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <video autoPlay loop muted playsInline class="background-video">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260314_131748_f2ca2a28-fed7-44c8-b9a9-bd9acdd5ec31.mp4" type="video/mp4" />
+    </video>
+    <div class="page-overlay"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-left">
+                <a href="javascript:history.back()" class="nav-link" style="border-width: 1.4px;">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+
+            <div class="nav-center">
+                <a href="/home" class="nav-brand">Vidya</a>
+            </div>
+
+            <div class="nav-right">
+                <div class="profile-dropdown">
+                    <button class="profile-trigger" id="profileDropdownTrigger">
+                        <div class="profile-picture">
+                            <img th:if="${base64ProfilePicture != null}"
+                                 th:src="${'data:' + profilePictureType + ';base64,' + base64ProfilePicture}"
+                                 alt="Profile Picture">
+                            <i th:unless="${base64ProfilePicture != null}" class="fas fa-user"></i>
+                        </div>
+                    </button>
+                    <div class="dropdown-menu" id="profileDropdownMenu">
+                        <a th:href="@{/home}" class="dropdown-item">
+                            <i class="fas fa-home"></i>
+                            Home
+                        </a>
+                        <a th:href="@{/about}" class="dropdown-item">
+                            <i class="fas fa-info-circle"></i>
+                            About
+                        </a>
+                        <a th:href="@{/contact}" class="dropdown-item">
+                            <i class="fas fa-envelope"></i>
+                            Contact
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a th:href="@{/profile}" class="dropdown-item">
+                            <i class="fas fa-user"></i>
+                            My Profile
+                        </a>
+                        <a th:href="@{/edit-profile}" class="dropdown-item">
+                            <i class="fas fa-user-edit"></i>
+                            Edit Profile
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <form th:action="@{/logout}" method="post" style="margin: 0;">
+                            <button type="submit" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Logout
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="content-container">
+        <a href="javascript:history.back()" class="back-button">← Back to Course</a>
+        
+        <div class="content-header">
+            <h1 class="content-title" id="contentTitle">Activity Content</h1>
+            <div class="content-path" th:text="${'Path: ' + contentPath}">Path: user/course/activity</div>
+        </div>
+
+        <div id="tutorialSections"></div>
+        
+        <button id="completeButton" class="complete-button" onclick="markComplete()">
+            <span class="icon">✓</span>
+            Mark Complete
+        </button>
+    </div>
+
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', async (event) => {
+            const profileTrigger = document.getElementById('profileDropdownTrigger');
+            const profileMenu = document.getElementById('profileDropdownMenu');
+
+            if (profileTrigger && profileMenu) {
+                profileTrigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    profileMenu.classList.toggle('show');
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!profileMenu.contains(e.target) && !profileTrigger.contains(e.target)) {
+                        profileMenu.classList.remove('show');
+                    }
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        profileMenu.classList.remove('show');
+                    }
+                });
+            }
+
+            // Get the JSON content from Thymeleaf
+            const jsonContent = /*[[${content}]]*/ '';
+            const contentPath = /*[[${contentPath}]]*/ '';
+            const [userId, courseId, activityId] = contentPath.split('/');
+            
+            // Initialize progress file
+            try {
+                // First initialize the progress
+                await fetch(`/api/progress/init/${userId}/${courseId}/${activityId}`, {
+                    method: 'POST'
+                });
+
+                // Then get the course progress to check completion status
+                const response = await fetch(`/api/progress/course/${userId}/${courseId}`);
+                const progressData = await response.json();
+                
+                // Check if this activity is completed
+                if (progressData.activities && progressData.activities[activityId] === true) {
+                    const button = document.getElementById('completeButton');
+                    button.classList.add('completed');
+                    button.innerHTML = '<span class="icon">✓</span>Completed';
+                    button.disabled = true;
+                }
+            } catch (error) {
+                console.error('Error checking progress:', error);
+            }
+            
+            try {
+                const data = JSON.parse(jsonContent);
+                
+                // Update title if available
+                if (data.component_content && data.component_content.title) {
+                    document.getElementById('contentTitle').textContent = data.component_content.title;
+                }
+                
+                // Create tutorial sections
+                const sectionsContainer = document.getElementById('tutorialSections');
+                if (data.component_content && data.component_content.content) {
+                    data.component_content.content.forEach(section => {
+                        const sectionElement = document.createElement('div');
+                        sectionElement.className = 'tutorial-section';
+                        
+                        // Add title
+                        const titleElement = document.createElement('h2');
+                        titleElement.className = 'section-title';
+                        titleElement.textContent = section.title;
+                        sectionElement.appendChild(titleElement);
+                        
+                        // Add content
+                        const contentElement = document.createElement('div');
+                        contentElement.className = 'section-content';
+                        let content = section.content;
+                        
+                        // Replace code blocks
+                        content = content.replace(/```python([\s\S]*?)```/g, '<pre><code class="language-python">$1</code></pre>');
+                        content = content.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+                        
+                        contentElement.innerHTML = content;
+                        sectionElement.appendChild(contentElement);
+                        
+                        // Add metadata if available
+                        if (section.duration || section.difficulty) {
+                            const metadataElement = document.createElement('div');
+                            metadataElement.className = 'section-metadata';
+                            
+                            if (section.duration) {
+                                const durationItem = document.createElement('div');
+                                durationItem.className = 'metadata-item';
+                                durationItem.innerHTML = `<span class="metadata-icon">⏱️</span><span>${section.duration}</span>`;
+                                metadataElement.appendChild(durationItem);
+                            }
+                            
+                            if (section.difficulty) {
+                                const difficultyItem = document.createElement('div');
+                                difficultyItem.className = 'metadata-item';
+                                difficultyItem.innerHTML = `<span class="metadata-icon">📊</span><span>${section.difficulty}</span>`;
+                                metadataElement.appendChild(difficultyItem);
+                            }
+                            
+                            sectionElement.appendChild(metadataElement);
+                        }
+                        
+                        sectionsContainer.appendChild(sectionElement);
+                    });
+                }
+                
+                // Apply syntax highlighting
+                document.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+            } catch (e) {
+                console.error('Error parsing JSON:', e);
+            }
+        });
+
+        async function markComplete() {
+            const button = document.getElementById('completeButton');
+            if (!button.classList.contains('completed')) {
+                const path = /*[[${contentPath}]]*/ '';
+                const [userId, courseId, activityId] = path.split('/');
+                
+                try {
+                    const response = await fetch(`/api/progress/complete/${userId}/${courseId}/${activityId}`, {
+                        method: 'POST'
+                    });
+                    
+                    if (response.ok) {
+                        button.classList.add('completed');
+                        button.innerHTML = '<span class="icon">✓</span>Completed';
+                        button.disabled = true;
+                    } else {
+                        console.error('Failed to mark as complete');
+                    }
+                } catch (error) {
+                    console.error('Error marking as complete:', error);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+{
+  "recommendations" : [ {
+    "id" : 19,
+    "title" : "Business Fundamentals",
+    "description" : "A comprehensive course covering the basics of business, including finance, accounting, and marketing.",
+    "confidence_score" : 60.0
+  } ],
+  "user_id" : 2,
+  "quiz_performance" : {
+    "topic_scores" : {
+      "general" : 100.0,
+      "problem_solving" : 50.0,
+      "learning_style" : 0.0,
+      "logical_reasoning" : 50.0,
+      "mathematical" : 50.0,
+      "motivation" : 100.0
+    },
+    "overall_score" : 50.0,
+    "weak_areas" : [ "problem_solving", "learning_style", "logical_reasoning", "mathematical" ],
+    "strengths" : [ "general", "motivation" ],
+    "total_questions_answered" : 10,
+    "question_distribution" : {
+      "general" : 1,
+      "problem_solving" : 2,
+      "learning_style" : 2,
+      "logical_reasoning" : 2,
+      "mathematical" : 2,
+      "motivation" : 1
+    }
+  }
+}

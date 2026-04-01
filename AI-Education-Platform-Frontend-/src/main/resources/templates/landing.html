@@ -1,0 +1,111 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn - Personalized Learning Platform</title>
+    <link rel="stylesheet" href="/css/landing.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Learn</div>
+            <div class="nav-links">
+                <div class="auth-buttons">
+                    <a th:href="@{/login}" class="login-btn">Login</a>
+                    <a th:href="@{/registration}" class="signup-btn">Sign Up</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero-section">
+        <div class="hero-video-container">
+            <video id="heroVideo" autoplay muted playsinline>
+                <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260324_151826_c7218672-6e92-402c-9e45-f1e0f454bdc4.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <img id="heroVideoFallback" src="/img/bgvideo.png" alt="Hero Background" style="display: none;">
+        </div>
+        <div class="hero-content">
+            <h1>Personalized Learning, <br>Tailored to Your Goals</h1>
+            <p>Discover a smarter way to learn with AI-powered course recommendations and adaptive learning paths.</p>
+            <div class="hero-cta">
+                <a th:href="@{/registration}" class="cta-button">Get Started</a>
+                <a href="#how-it-works" class="learn-more-btn">Learn More</a>
+            </div>
+        </div>
+    </header>
+
+    <section id="features" class="features-section">
+        <h2>Why Choose Learn?</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <i class="fas fa-magic"></i>
+                <h3>AI-Powered Recommendations</h3>
+                <p>Our intelligent system suggests courses perfectly aligned with your learning goals and skill level.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-chart-line"></i>
+                <h3>Adaptive Learning Paths</h3>
+                <p>Dynamic course progression that adjusts based on your performance and learning pace.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-certificate"></i>
+                <h3>Skill Verification</h3>
+                <p>Comprehensive quizzes and assessments to validate and certify your newly acquired skills.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="how-it-works" class="how-it-works-section">
+        <h2>How Learn Works</h2>
+        <div class="steps-container">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3>Take Personalized Survey</h3>
+                <p>Share your learning goals, interests, and current skill level.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3>Get Course Recommendations</h3>
+                <p>Receive tailored course suggestions based on your profile.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3>Learn and Grow</h3>
+                <p>Follow your personalized learning path and track your progress.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-logo">Learn</div>
+            <div class="footer-links">
+                <a href="#">About</a>
+                <a href="#">Contact</a>
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+            </div>
+            <div class="social-links">
+                <a href="#"><i class="fab fa-facebook"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-linkedin"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+            </div>
+        </div>
+        <div class="copyright">
+            2026 Learn. All Rights Reserved.
+        </div>
+    </footer>
+
+    <script src="/js/landing.js"></script>
+</body>
+</html>
+
+
+
+

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Vidya</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            color: #fff;
+            background: #000;
+            min-height: 100vh;
+        }
+
+        .background-video {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: 0;
+            filter: brightness(0.55) saturate(0.9);
+            pointer-events: none;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 20;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+            background: transparent;
+        }
+
+        .nav-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Instrument Serif', serif;
+            font-size: 2rem;
+            color: #fff;
+            text-decoration: none;
+            line-height: 1;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .nav-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.36);
+            border-radius: 999px;
+            padding: 0.45rem 0.95rem;
+            font-size: 0.86rem;
+            background: rgba(255, 255, 255, 0.06);
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.18);
+            color: #fff;
+        }
+
+        .profile-wrapper {
+            position: relative;
+            z-index: 10;
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 5.8rem 1.2rem 2rem;
+        }
+
+        .profile-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1.5px solid rgba(255, 255, 255, 0.7);
+            border-radius: 24px;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+            padding: 1.3rem;
+        }
+
+        .profile-top {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .avatar {
+            width: 78px;
+            height: 78px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            font-size: 1.8rem;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-title h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .profile-title p {
+            margin: 0.2rem 0 0;
+            color: rgba(255, 255, 255, 0.78);
+            font-size: 0.92rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.8rem;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            border-radius: 14px;
+            padding: 0.75rem 0.85rem;
+            min-height: 76px;
+        }
+
+        .info-item label {
+            display: block;
+            font-size: 0.76rem;
+            color: rgba(255, 255, 255, 0.72);
+            margin-bottom: 0.35rem;
+        }
+
+        .info-item p {
+            margin: 0;
+            color: #fff;
+            font-size: 0.95rem;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+
+        .actions {
+            margin-top: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            text-decoration: none;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.72);
+            border-radius: 999px;
+            padding: 0.58rem 1.08rem;
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.08);
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        @media (max-width: 760px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-wrapper {
+                padding-top: 5.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <video autoPlay loop muted playsInline class="background-video">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260324_151826_c7218672-6e92-402c-9e45-f1e0f454bdc4.mp4" type="video/mp4" />
+    </video>
+
+    <nav class="navbar">
+        <div class="nav-content">
+            <a th:href="@{/home}" class="logo">Vidya</a>
+            <div class="nav-links">
+                <a th:href="@{/home}" class="nav-link"><i class="fas fa-home"></i> Home</a>
+                <a th:href="@{/about}" class="nav-link"><i class="fas fa-info-circle"></i> About</a>
+                <a th:href="@{/contact}" class="nav-link"><i class="fas fa-envelope"></i> Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="profile-wrapper">
+        <section class="profile-card">
+            <div class="profile-top">
+                <div class="avatar">
+                    <img th:if="${base64ProfilePicture != null}"
+                         th:src="${'data:' + profilePictureType + ';base64,' + base64ProfilePicture}"
+                         alt="Profile Picture">
+                    <i th:unless="${base64ProfilePicture != null}" class="fas fa-user"></i>
+                </div>
+                <div class="profile-title">
+                    <h1 th:text="${user.firstName + ' ' + user.lastName}">User Name</h1>
+                    <p>Student Profile</p>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Email</label>
+                    <p th:text="${user.email}">user@example.com</p>
+                </div>
+                <div class="info-item">
+                    <label>Phone Number</label>
+                    <p th:text="${user.phoneNumber != null ? user.phoneNumber : 'Not added yet'}">Not added yet</p>
+                </div>
+                <div class="info-item">
+                    <label>Sex</label>
+                    <p th:text="${user.sex != null ? user.sex : 'Not added yet'}">Not added yet</p>
+                </div>
+                <div class="info-item">
+                    <label>Date of Birth</label>
+                    <p th:text="${user.dateOfBirth != null ? #temporals.format(user.dateOfBirth, 'dd-MM-yyyy') : 'Not added yet'}">Not added yet</p>
+                </div>
+                <div class="info-item">
+                    <label>Country</label>
+                    <p th:text="${user.country != null ? user.country : 'Not added yet'}">Not added yet</p>
+                </div>
+                <div class="info-item">
+                    <label>Address</label>
+                    <p th:text="${user.address != null ? user.address : 'Not added yet'}">Not added yet</p>
+                </div>
+            </div>
+
+            <div class="actions">
+                <a th:href="@{/edit-profile}" class="action-btn">
+                    <i class="fas fa-user-edit"></i> Edit Profile
+                </a>
+                <a th:href="@{/home}" class="action-btn">
+                    <i class="fas fa-arrow-left"></i> Back to Home
+                </a>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

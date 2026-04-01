@@ -1,0 +1,49 @@
+{
+  "recommendations" : [ {
+    "id" : 1,
+    "title" : "Discrete Mathematics for Computer Science",
+    "description" : "Build foundational mathematical and logical reasoning skills essential for algorithm design and problem-solving in technology careers.",
+    "confidence_score" : 0.85
+  }, {
+    "id" : 2,
+    "title" : "Career-Driven Problem Solving Workshop",
+    "description" : "Enhance practical problem-solving techniques with real-world tech scenarios, leveraging your existing 50% proficiency while addressing gaps in logical reasoning.",
+    "confidence_score" : 0.78
+  }, {
+    "id" : 3,
+    "title" : "Tech Career Motivation & Time Management",
+    "description" : "Combine career advancement strategies with motivational techniques to maintain focus and productivity as a tech student.",
+    "confidence_score" : 0.72
+  }, {
+    "id" : 4,
+    "title" : "Logical Reasoning for Software Development",
+    "description" : "Targeted exercises to strengthen logical reasoning skills through coding challenges and algorithmic thinking.",
+    "confidence_score" : 0.75
+  }, {
+    "id" : 5,
+    "title" : "Math Essentials for Data Science",
+    "description" : "Bridge mathematical gaps with applied data science concepts, linking theory to practical tech career applications.",
+    "confidence_score" : 0.7
+  } ],
+  "user_id" : 1,
+  "quiz_performance" : {
+    "topic_scores" : {
+      "problem_solving" : 50.0,
+      "learning_style" : 100.0,
+      "logical_reasoning" : 0.0,
+      "mathematical" : 0.0,
+      "motivation" : 0.0
+    },
+    "overall_score" : 33.33,
+    "weak_areas" : [ "problem_solving", "logical_reasoning", "mathematical", "motivation" ],
+    "strengths" : [ "learning_style" ],
+    "total_questions_answered" : 9,
+    "question_distribution" : {
+      "problem_solving" : 2,
+      "learning_style" : 2,
+      "logical_reasoning" : 2,
+      "mathematical" : 2,
+      "motivation" : 1
+    }
+  }
+}

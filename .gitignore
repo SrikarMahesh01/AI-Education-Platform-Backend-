@@ -5,3 +5,6 @@ __pycache__/
 venv/
 generated_learning_paths/
 faiss_index.bin
+AI-Education-Platform-Frontend-/target/
+velorah-hero/node_modules/
+velorah-hero/dist/

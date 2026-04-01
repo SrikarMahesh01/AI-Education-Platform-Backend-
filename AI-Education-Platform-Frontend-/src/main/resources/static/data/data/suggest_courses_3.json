@@ -1,0 +1,41 @@
+{
+  "recommendations" : [ {
+    "id" : 20,
+    "title" : "Career Development in Design",
+    "description" : "This course will focus on the practical applications of design principles and their impact on career advancement.",
+    "confidence_score" : 80.0
+  }, {
+    "id" : 21,
+    "title" : "Design Thinking for Career Advancement",
+    "description" : "This course will teach you how to apply design thinking principles to improve your problem-solving skills and career prospects.",
+    "confidence_score" : 75.0
+  }, {
+    "id" : 22,
+    "title" : "Professional Development in Design",
+    "description" : "This course will cover the latest trends and best practices in design, with a focus on career advancement and professional growth.",
+    "confidence_score" : 85.0
+  } ],
+  "user_id" : 3,
+  "quiz_performance" : {
+    "topic_scores" : {
+      "general" : 100.0,
+      "problem_solving" : 50.0,
+      "learning_style" : 0.0,
+      "logical_reasoning" : 50.0,
+      "mathematical" : 50.0,
+      "motivation" : 0.0
+    },
+    "overall_score" : 40.0,
+    "weak_areas" : [ "problem_solving", "learning_style", "logical_reasoning", "mathematical", "motivation" ],
+    "strengths" : [ "general" ],
+    "total_questions_answered" : 10,
+    "question_distribution" : {
+      "general" : 1,
+      "problem_solving" : 2,
+      "learning_style" : 2,
+      "logical_reasoning" : 2,
+      "mathematical" : 2,
+      "motivation" : 1
+    }
+  }
+}

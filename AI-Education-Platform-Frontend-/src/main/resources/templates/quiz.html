@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Style Assessment - Vidya</title>
+    <link rel="stylesheet" href="/css/quiz_styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <video autoPlay loop muted playsInline class="background-video">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260302_085640_276ea93b-d7da-4418-a09b-2aa5b490e838.mp4" type="video/mp4" />
+    </video>
+    <div class="bg-overlay" aria-hidden="true"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="logo">Vidya</div>
+            <div class="nav-actions">
+                <a th:href="@{/logout}" class="logout-button">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Start Screen -->
+        <div id="name-screen" class="quiz-container">
+            <div class="quiz-header">
+                <h2>Cognitive and Learning Style Assessment</h2>
+                <p>Discover your unique learning preferences and cognitive patterns</p>
+            </div>
+            <button id="start-quiz" class="action-btn">
+                <i class="fas fa-play"></i> Start Assessment
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="quiz-container" style="display:none;">
+            <div class="timer-container">
+                <div id="timer-bar"></div>
+            </div>
+            <div id="question-container">
+                <div class="question-label">Question:</div>
+                <h2 id="question-text"></h2>
+                <img id="question-image" class="question-image" style="display:none;">
+                <div class="options-label">Options:</div>
+                <div id="answer-buttons" class="answer-grid"></div>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="quiz-container" style="display:none;">
+            <div class="quiz-header">
+                <h2>Assessment Complete!</h2>
+                <div id="score-display"></div>
+            </div>
+            <form method="POST" action="/quiz/submit">
+                <input type="hidden" name="userId" th:value="${userId}">
+                <input type="hidden" id="finalScore" name="score" value="0">
+                <input type="hidden" id="totalQuestions" name="totalQuestions" value="0">
+                <button type="submit" class="action-btn" style="display: none;">
+                    <i class="fas fa-save"></i> Save Results
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/js/quiz.js"></script>
+</body>
+</html>

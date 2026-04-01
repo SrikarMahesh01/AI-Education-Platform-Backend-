@@ -1,0 +1,15 @@
+[ {
+  "score" : 4,
+  "totalQuestions" : 10,
+  "percentage" : 40.0,
+  "id" : 1,
+  "userId" : 1,
+  "submissionTime" : "2026-03-31T08:45:34"
+}, {
+  "score" : 3,
+  "totalQuestions" : 10,
+  "percentage" : 30.0,
+  "id" : 3,
+  "userId" : 3,
+  "submissionTime" : "2026-04-01T12:50:47"
+} ]
