@@ -24,4 +24,43 @@
   "userId" : 3,
   "learningExperience" : "beginner",
   "techComfortLevel" : "very_comfortable"
+}, {
+  "careerField" : "technology",
+  "learningMotivation" : "academic",
+  "preferredLearningFormat" : "mixed",
+  "professionalStatus" : "student",
+  "skillDevelopmentGoal" : "academic",
+  "timeAvailability" : "flexible",
+  "learningChallenges" : "motivation",
+  "id" : 5,
+  "onlineLearningExperience" : "multiple",
+  "userId" : 5,
+  "learningExperience" : "intermediate",
+  "techComfortLevel" : "very_comfortable"
+}, {
+  "careerField" : "technology",
+  "learningMotivation" : "career_advancement",
+  "preferredLearningFormat" : "video",
+  "professionalStatus" : "student",
+  "skillDevelopmentGoal" : "career",
+  "timeAvailability" : "less_than_5",
+  "learningChallenges" : "time",
+  "id" : 7,
+  "onlineLearningExperience" : "none",
+  "userId" : 7,
+  "learningExperience" : "beginner",
+  "techComfortLevel" : "beginner"
+}, {
+  "careerField" : "technology",
+  "learningMotivation" : "career_advancement",
+  "preferredLearningFormat" : "video",
+  "professionalStatus" : "student",
+  "skillDevelopmentGoal" : "career",
+  "timeAvailability" : "less_than_5",
+  "learningChallenges" : "time",
+  "id" : 8,
+  "onlineLearningExperience" : "none",
+  "userId" : 8,
+  "learningExperience" : "beginner",
+  "techComfortLevel" : "beginner"
 } ]

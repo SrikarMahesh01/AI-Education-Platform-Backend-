@@ -1,0 +1,51 @@
+{
+  "recommendations" : [ {
+    "id" : 44,
+    "title" : "Learning How to Learn",
+    "description" : "Master effective learning techniques and discover your optimal learning style through interactive video lessons. This course will help you understand how to study smarter, not harder.",
+    "confidence_score" : 95.0
+  }, {
+    "id" : 45,
+    "title" : "Introduction to Logic and Critical Thinking",
+    "description" : "Build foundational logical reasoning skills through engaging video content. Learn to analyze arguments, identify logical fallacies, and strengthen your critical thinking abilities.",
+    "confidence_score" : 90.0
+  }, {
+    "id" : 46,
+    "title" : "Math Fundamentals for Tech Careers",
+    "description" : "Essential mathematical concepts taught through visual video instruction. Perfect for students who need to strengthen their math foundation for technology careers.",
+    "confidence_score" : 85.0
+  }, {
+    "id" : 47,
+    "title" : "Motivation and Productivity for Students",
+    "description" : "Learn proven strategies to boost motivation and maintain productivity throughout your academic journey. Video-based course with practical exercises and real-world applications.",
+    "confidence_score" : 88.0
+  }, {
+    "id" : 48,
+    "title" : "Study Skills and Learning Strategies",
+    "description" : "Develop personalized study techniques that match your learning preferences. Focus on video-based learning methods that align with your preferred learning style.",
+    "confidence_score" : 82.0
+  } ],
+  "user_id" : 7,
+  "quiz_performance" : {
+    "topic_scores" : {
+      "general" : 100.0,
+      "problem_solving" : 100.0,
+      "learning_style" : 0.0,
+      "logical_reasoning" : 0.0,
+      "mathematical" : 0.0,
+      "motivation" : 0.0
+    },
+    "overall_score" : 30.0,
+    "weak_areas" : [ "learning_style", "logical_reasoning", "mathematical", "motivation" ],
+    "strengths" : [ "general", "problem_solving" ],
+    "total_questions_answered" : 10,
+    "question_distribution" : {
+      "general" : 1,
+      "problem_solving" : 2,
+      "learning_style" : 2,
+      "logical_reasoning" : 2,
+      "mathematical" : 2,
+      "motivation" : 1
+    }
+  }
+}

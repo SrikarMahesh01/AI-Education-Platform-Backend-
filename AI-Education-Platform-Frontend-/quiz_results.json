@@ -12,4 +12,25 @@
   "id" : 3,
   "userId" : 3,
   "submissionTime" : "2026-04-01T12:50:47"
+}, {
+  "score" : 7,
+  "totalQuestions" : 10,
+  "percentage" : 70.0,
+  "id" : 5,
+  "userId" : 5,
+  "submissionTime" : "2026-04-02T10:08:30"
+}, {
+  "score" : 3,
+  "totalQuestions" : 10,
+  "percentage" : 30.0,
+  "id" : 7,
+  "userId" : 7,
+  "submissionTime" : "2026-04-02T14:35:51"
+}, {
+  "score" : 3,
+  "totalQuestions" : 10,
+  "percentage" : 30.0,
+  "id" : 8,
+  "userId" : 8,
+  "submissionTime" : "2026-04-02T14:57:23.0539255"
 } ]

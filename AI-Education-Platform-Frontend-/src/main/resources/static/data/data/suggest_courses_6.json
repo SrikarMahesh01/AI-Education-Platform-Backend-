@@ -1,0 +1,51 @@
+{
+  "recommendations" : [ {
+    "id" : 21,
+    "title" : "Introduction to Computer Science and Programming",
+    "description" : "Fundamental concepts of computer science, programming basics, and computational thinking to build strong technical foundations.",
+    "confidence_score" : 0.95
+  }, {
+    "id" : 22,
+    "title" : "Mathematical Thinking for Computer Science",
+    "description" : "Essential mathematical concepts and logical reasoning skills specifically tailored for technology students.",
+    "confidence_score" : 0.92
+  }, {
+    "id" : 23,
+    "title" : "Problem Solving and Analytical Skills for Tech Professionals",
+    "description" : "Structured approach to problem-solving methodologies used in technology careers with hands-on exercises.",
+    "confidence_score" : 0.88
+  }, {
+    "id" : 24,
+    "title" : "Learning Strategies for Technical Subjects",
+    "description" : "Effective learning techniques adapted for technology fields, covering different learning styles and retention methods.",
+    "confidence_score" : 0.85
+  }, {
+    "id" : 25,
+    "title" : "Logical Reasoning and Critical Thinking in Technology",
+    "description" : "Develop logical reasoning abilities through technology-specific case studies and algorithmic thinking exercises.",
+    "confidence_score" : 0.82
+  } ],
+  "user_id" : 6,
+  "quiz_performance" : {
+    "topic_scores" : {
+      "general" : 0.0,
+      "problem_solving" : 50.0,
+      "learning_style" : 0.0,
+      "logical_reasoning" : 50.0,
+      "mathematical" : 0.0,
+      "motivation" : 100.0
+    },
+    "overall_score" : 33.33,
+    "weak_areas" : [ "general", "problem_solving", "learning_style", "logical_reasoning", "mathematical" ],
+    "strengths" : [ "motivation" ],
+    "total_questions_answered" : 9,
+    "question_distribution" : {
+      "general" : 1,
+      "problem_solving" : 2,
+      "learning_style" : 2,
+      "logical_reasoning" : 2,
+      "mathematical" : 1,
+      "motivation" : 1
+    }
+  }
+}

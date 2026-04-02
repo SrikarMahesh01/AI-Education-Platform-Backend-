@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 import json
@@ -6,13 +7,26 @@ import os
 from pathlib import Path
 import re
 import sqlite3
-from typing import Any, Literal, Optional, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Literal, Optional, TypeVar
+from uuid import uuid4
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from ollama import Client
 from pydantic import BaseModel, Field, ValidationError
+
+if TYPE_CHECKING:
+    from redis.asyncio import Redis as RedisClientType
+else:
+    RedisClientType = Any
+
+try:
+    from redis.asyncio import from_url as redis_from_url
+    REDIS_IMPORT_AVAILABLE = True
+except ModuleNotFoundError:
+    redis_from_url = None
+    REDIS_IMPORT_AVAILABLE = False
 
 # Register the adapter
 sqlite3.register_adapter(datetime, lambda x: x.isoformat())
@@ -22,45 +36,71 @@ SPRING_BOOT_API_BASE = os.getenv("SPRING_BOOT_API_BASE", "http://localhost:8084"
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "https://ollama.com").rstrip("/")
 OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL")
-OLLAMA_DIRECT_CLOUD_MODEL_CANDIDATES = (
+OLLAMA_CLOUD_MODEL_CANDIDATES = (
+    "qwen3-coder:480b",
+    "deepseek-v3.1:671b",
     "gpt-oss:20b",
     "gpt-oss:120b",
-    "deepseek-v3.1:671b",
-    "qwen3-coder:480b",
     "kimi-k2:1t",
 )
-OLLAMA_LOCAL_CLOUD_MODEL_CANDIDATES = (
-    "gpt-oss:20b-cloud",
-    "gpt-oss:120b-cloud",
-    "deepseek-v3.1:671b-cloud",
-    "qwen3-coder:480b-cloud",
-    "kimi-k2:1t-cloud",
+OLLAMA_LOCAL_CLOUD_MODEL_CANDIDATES = tuple(
+    f"{model_name}-cloud" for model_name in OLLAMA_CLOUD_MODEL_CANDIDATES
 )
 OLLAMA_LOCAL_MODEL_CANDIDATES_16GB = (
-    "qwen3:8b",
     "qwen2.5:7b-instruct",
-    "qwen2.5:7b",
-    "llama3.3:8b",
-    "llama3.2:3b-instruct",
+    "qwen3:8b",
     "llama3.1:8b-instruct",
+    "llama3.2:3b-instruct",
     "gemma3:4b",
-    "gemma2:9b",
     "mistral:7b",
-    "llama3.2",
 )
 HTTP_TIMEOUT = httpx.Timeout(20.0, connect=5.0)
 MODEL_DISCOVERY_TIMEOUT = httpx.Timeout(5.0, connect=3.0)
 MODEL_SIZE_PATTERN = re.compile(r"(\d+(?:\.\d+)?)b", re.IGNORECASE)
 TModel = TypeVar("TModel", bound=BaseModel)
+JSONDict = dict[str, Any]
 _SELECTED_OLLAMA_MODEL: Optional[str] = None
 _OLLAMA_CLIENT: Optional[Client] = None
+MAX_STRUCTURED_MODEL_ATTEMPTS = 3
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+REDIS_ENABLED_BY_ENV = os.getenv("REDIS_ENABLED", "true").strip().lower() not in {"0", "false", "no"}
+REDIS_ENABLED = REDIS_ENABLED_BY_ENV and REDIS_IMPORT_AVAILABLE
 try:
     OLLAMA_NUM_CTX = int(os.getenv("OLLAMA_NUM_CTX", "4096"))
 except ValueError:
     OLLAMA_NUM_CTX = 4096
+try:
+    REDIS_CACHE_TTL_SECONDS = int(os.getenv("REDIS_CACHE_TTL_SECONDS", "86400"))
+except ValueError:
+    REDIS_CACHE_TTL_SECONDS = 86400
+try:
+    REDIS_LOCK_TTL_SECONDS = int(os.getenv("REDIS_LOCK_TTL_SECONDS", "120"))
+except ValueError:
+    REDIS_LOCK_TTL_SECONDS = 120
+try:
+    REDIS_LOCK_WAIT_SECONDS = float(os.getenv("REDIS_LOCK_WAIT_SECONDS", "8"))
+except ValueError:
+    REDIS_LOCK_WAIT_SECONDS = 8.0
+try:
+    REDIS_LOCK_POLL_INTERVAL_SECONDS = float(
+        os.getenv("REDIS_LOCK_POLL_INTERVAL_SECONDS", "0.2")
+    )
+except ValueError:
+    REDIS_LOCK_POLL_INTERVAL_SECONDS = 0.2
+
+_REDIS_CLIENT: Optional[RedisClientType] = None
+
+REDIS_RELEASE_LOCK_SCRIPT = """
+if redis.call('get', KEYS[1]) == ARGV[1] then
+    return redis.call('del', KEYS[1])
+else
+    return 0
+end
+"""
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler('server.log'),
@@ -69,6 +109,177 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.INFO)
+
+
+def normalize_cache_fragment(value: str) -> str:
+    """Normalize cache key parts for consistent cross-user reuse."""
+    normalized = re.sub(r"[^a-z0-9]+", "-", value.strip().lower()).strip("-")
+    return normalized or "unknown"
+
+
+def build_learning_path_cache_key(course_title: str) -> str:
+    """Build cache key for generated learning paths shared by course title."""
+    return f"cache:v1:learning-path:{normalize_cache_fragment(course_title)}"
+
+
+def build_content_cache_key(course_title: str, component_id: str) -> str:
+    """Build cache key for generated component content shared by course title."""
+    return (
+        f"cache:v1:course-content:{normalize_cache_fragment(course_title)}:"
+        f"{normalize_cache_fragment(component_id)}"
+    )
+
+
+async def cache_get_json(cache_key: str) -> Optional[JSONDict]:
+    """Get JSON payload from Redis cache when available."""
+    if _REDIS_CLIENT is None:
+        return None
+
+    try:
+        raw_value = await _REDIS_CLIENT.get(cache_key)
+    except Exception as e:
+        logger.warning(f"Redis get failed for {cache_key}: {str(e)}")
+        return None
+
+    if raw_value is None:
+        return None
+
+    try:
+        payload = json.loads(raw_value)
+    except ValueError:
+        logger.warning(f"Invalid cached JSON for key {cache_key}; ignoring entry")
+        return None
+
+    if isinstance(payload, dict):
+        return payload
+
+    logger.warning(f"Cached value for key {cache_key} is not a JSON object")
+    return None
+
+
+async def cache_set_json(cache_key: str, payload: JSONDict) -> None:
+    """Set JSON payload in Redis cache."""
+    if _REDIS_CLIENT is None:
+        return
+
+    try:
+        await _REDIS_CLIENT.set(
+            cache_key,
+            json.dumps(payload),
+            ex=REDIS_CACHE_TTL_SECONDS,
+        )
+    except Exception as e:
+        logger.warning(f"Redis set failed for {cache_key}: {str(e)}")
+
+
+async def acquire_cache_lock(lock_key: str) -> Optional[str]:
+    """Acquire a short-lived Redis lock to avoid cache stampede."""
+    if _REDIS_CLIENT is None:
+        return None
+
+    lock_token = uuid4().hex
+    try:
+        acquired = await _REDIS_CLIENT.set(
+            lock_key,
+            lock_token,
+            ex=REDIS_LOCK_TTL_SECONDS,
+            nx=True,
+        )
+    except Exception as e:
+        logger.warning(f"Redis lock acquisition failed for {lock_key}: {str(e)}")
+        return None
+
+    if acquired:
+        return lock_token
+    return None
+
+
+async def release_cache_lock(lock_key: str, lock_token: str) -> None:
+    """Release Redis lock if it is still owned by this request."""
+    if _REDIS_CLIENT is None:
+        return
+
+    try:
+        await _REDIS_CLIENT.eval(REDIS_RELEASE_LOCK_SCRIPT, 1, lock_key, lock_token)
+    except Exception as e:
+        logger.warning(f"Redis lock release failed for {lock_key}: {str(e)}")
+
+
+async def wait_for_cached_json(cache_key: str, timeout_seconds: float) -> Optional[JSONDict]:
+    """Wait for a concurrent request to populate cache and return payload when ready."""
+    deadline = asyncio.get_running_loop().time() + timeout_seconds
+    while asyncio.get_running_loop().time() < deadline:
+        cached_payload = await cache_get_json(cache_key)
+        if cached_payload is not None:
+            return cached_payload
+        await asyncio.sleep(REDIS_LOCK_POLL_INTERVAL_SECONDS)
+    return None
+
+
+async def get_or_compute_cached_json(
+    cache_key: str,
+    compute_fn: Callable[[], JSONDict],
+    schema: Optional[type[BaseModel]] = None,
+) -> tuple[JSONDict, bool]:
+    """Get cached payload or compute/store it once with lock protection."""
+    cached_payload = await cache_get_json(cache_key)
+    if cached_payload is not None:
+        if schema is not None:
+            try:
+                return schema.model_validate(cached_payload).model_dump(), True
+            except ValidationError:
+                logger.warning(f"Cached payload failed {schema.__name__} validation for {cache_key}")
+        else:
+            return cached_payload, True
+
+    if _REDIS_CLIENT is None:
+        computed_payload = await asyncio.to_thread(compute_fn)
+        if schema is not None:
+            computed_payload = schema.model_validate(computed_payload).model_dump()
+        return computed_payload, False
+
+    lock_key = f"{cache_key}:lock"
+    lock_token = await acquire_cache_lock(lock_key)
+
+    if lock_token:
+        try:
+            cached_payload = await cache_get_json(cache_key)
+            if cached_payload is not None:
+                if schema is not None:
+                    try:
+                        return schema.model_validate(cached_payload).model_dump(), True
+                    except ValidationError:
+                        logger.warning(
+                            f"Cached payload failed {schema.__name__} validation for {cache_key}"
+                        )
+                else:
+                    return cached_payload, True
+
+            computed_payload = await asyncio.to_thread(compute_fn)
+            if schema is not None:
+                computed_payload = schema.model_validate(computed_payload).model_dump()
+            await cache_set_json(cache_key, computed_payload)
+            return computed_payload, False
+        finally:
+            await release_cache_lock(lock_key, lock_token)
+
+    waited_payload = await wait_for_cached_json(cache_key, REDIS_LOCK_WAIT_SECONDS)
+    if waited_payload is not None:
+        if schema is not None:
+            try:
+                return schema.model_validate(waited_payload).model_dump(), True
+            except ValidationError:
+                logger.warning(f"Waited cache payload failed {schema.__name__} validation for {cache_key}")
+        else:
+            return waited_payload, True
+
+    computed_payload = await asyncio.to_thread(compute_fn)
+    if schema is not None:
+        computed_payload = schema.model_validate(computed_payload).model_dump()
+    await cache_set_json(cache_key, computed_payload)
+    return computed_payload, False
 
 def get_db_connection() -> sqlite3.Connection:
     """Create a SQLite connection with app defaults."""
@@ -166,10 +377,53 @@ def discover_ollama_models() -> list[str]:
         response.raise_for_status()
         payload = response.json()
         models = payload.get("models", [])
-        return [m["name"] for m in models if isinstance(m, dict) and m.get("name")]
+        discovered_models: list[str] = []
+        for model in models:
+            if not isinstance(model, dict):
+                continue
+            model_name = model.get("name")
+            if isinstance(model_name, str) and model_name:
+                discovered_models.append(model_name)
+        return discovered_models
     except (httpx.HTTPError, ValueError) as e:
         logger.warning(f"Failed to discover Ollama models from {OLLAMA_HOST}: {str(e)}")
         return []
+
+
+def dedupe_models(model_names: list[str]) -> list[str]:
+    """Deduplicate model names while preserving order."""
+    unique_models: list[str] = []
+    seen: set[str] = set()
+    for model_name in model_names:
+        normalized_name = model_name.lower()
+        if normalized_name in seen:
+            continue
+        seen.add(normalized_name)
+        unique_models.append(model_name)
+    return unique_models
+
+
+def get_structured_output_model_candidates(primary_model: str) -> list[str]:
+    """Build ordered model candidates for structured-output retries."""
+    available_models = discover_ollama_models()
+    if not available_models:
+        return [primary_model]
+
+    available_lookup = {name.lower(): name for name in available_models}
+    preferred_models: list[str] = [primary_model]
+    if OLLAMA_HOST.endswith("ollama.com"):
+        preferred_models.extend(OLLAMA_CLOUD_MODEL_CANDIDATES)
+    else:
+        preferred_models.extend(OLLAMA_LOCAL_CLOUD_MODEL_CANDIDATES)
+        preferred_models.extend(OLLAMA_LOCAL_MODEL_CANDIDATES_16GB)
+
+    preferred_models.extend(available_models)
+
+    resolved_candidates: list[str] = []
+    for candidate in preferred_models:
+        resolved_candidates.append(available_lookup.get(candidate.lower(), candidate))
+
+    return dedupe_models(resolved_candidates)
 
 
 def resolve_ollama_model() -> str:
@@ -180,7 +434,11 @@ def resolve_ollama_model() -> str:
 
     available_models = discover_ollama_models()
     if not available_models:
-        fallback_model = "gpt-oss:20b"
+        fallback_model = (
+            OLLAMA_CLOUD_MODEL_CANDIDATES[0]
+            if OLLAMA_HOST.endswith("ollama.com")
+            else OLLAMA_LOCAL_MODEL_CANDIDATES_16GB[0]
+        )
         logger.warning(
             f"Could not discover models from {OLLAMA_HOST}; falling back to {fallback_model}. "
             "Set OLLAMA_MODEL to override."
@@ -189,7 +447,7 @@ def resolve_ollama_model() -> str:
 
     available_lookup = {name.lower(): name for name in available_models}
     if OLLAMA_HOST.endswith("ollama.com"):
-        for preferred in OLLAMA_DIRECT_CLOUD_MODEL_CANDIDATES:
+        for preferred in OLLAMA_CLOUD_MODEL_CANDIDATES:
             match = available_lookup.get(preferred.lower())
             if match:
                 return match
@@ -584,59 +842,103 @@ def normalize_content_module_payload(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def build_structured_prompt(prompt: str, schema: type[BaseModel]) -> str:
+    """Build a strict prompt to maximize JSON-only responses."""
+    schema_json = json.dumps(schema.model_json_schema(), ensure_ascii=True)
+    return (
+        f"{prompt.strip()}\n\n"
+        "Return exactly one JSON object and nothing else. "
+        "Do not include markdown fences, commentary, or prose. "
+        f"The JSON MUST conform to this schema: {schema_json}"
+    )
+
+
+def coerce_structured_payload(schema: type[TModel], json_payload: str) -> Optional[TModel]:
+    """Try schema-specific coercions when the model output is close but not exact."""
+    try:
+        raw_obj = json.loads(json_payload)
+    except ValueError:
+        return None
+
+    if not isinstance(raw_obj, dict):
+        return None
+
+    try:
+        if schema is CourseRecommendationsPayload:
+            coerced_obj = coerce_recommendations_payload(raw_obj)
+            return schema.model_validate(coerced_obj)
+        if schema is GeneratedLearningPath:
+            coerced_obj = normalize_learning_path_payload(raw_obj)
+            return schema.model_validate(coerced_obj)
+        if schema is GeneratedContentModule:
+            coerced_obj = normalize_content_module_payload(raw_obj)
+            return schema.model_validate(coerced_obj)
+    except ValidationError:
+        return None
+
+    return None
+
+
 def call_ollama_structured(prompt: str, schema: type[TModel]) -> TModel:
     """Call Ollama with JSON schema and validate with Pydantic."""
-    model_name = get_ollama_model()
-    try:
-        client = get_ollama_client()
-        response = client.chat(
-            model=model_name,
-            messages=[{"role": "user", "content": prompt}],
-            format=schema.model_json_schema(),
-            options={"temperature": 0.1, "num_ctx": OLLAMA_NUM_CTX},
-        )
-    except Exception as e:
-        logger.error(f"Ollama request failed for model {model_name} on {OLLAMA_HOST}: {str(e)}")
-        raise HTTPException(status_code=502, detail=f"Ollama request failed: {str(e)}")
+    client = get_ollama_client()
+    primary_model = get_ollama_model()
+    structured_prompt = build_structured_prompt(prompt, schema)
+    schema_json = schema.model_json_schema()
 
-    raw_content = response.message.content
-    json_payload = extract_json_payload(raw_content)
-    try:
-        return schema.model_validate_json(json_payload)
-    except ValidationError as e:
-        if schema is CourseRecommendationsGeneration:
-            try:
-                raw_obj = json.loads(json_payload)
-                coerced_obj = coerce_recommendations_payload(raw_obj)
-                return schema.model_validate(coerced_obj)
-            except (ValueError, ValidationError):
-                pass
-        if schema is GeneratedLearningPath:
-            try:
-                raw_obj = json.loads(json_payload)
-                coerced_obj = normalize_learning_path_payload(raw_obj)
-                return schema.model_validate(coerced_obj)
-            except (ValueError, ValidationError):
-                pass
-        if schema is GeneratedContentModule:
-            try:
-                raw_obj = json.loads(json_payload)
-                coerced_obj = normalize_content_module_payload(raw_obj)
-                return schema.model_validate(coerced_obj)
-            except (ValueError, ValidationError):
-                pass
+    candidate_models = get_structured_output_model_candidates(primary_model)
+    candidate_models = candidate_models[:MAX_STRUCTURED_MODEL_ATTEMPTS]
 
-        logger.error(f"Structured output validation failed for {schema.__name__}: {str(e)}")
-        logger.debug(f"Raw LLM output from {model_name}: {raw_content}")
-        raise HTTPException(
-            status_code=502,
-            detail=f"LLM output failed {schema.__name__} schema validation",
-        )
+    last_error: Optional[str] = None
+    last_raw_output = ""
+
+    for model_name in candidate_models:
+        try:
+            response = client.chat(
+                model=model_name,
+                messages=[{"role": "user", "content": structured_prompt}],
+                format=schema_json,
+                options={"temperature": 0.0, "num_ctx": OLLAMA_NUM_CTX},
+            )
+        except Exception as e:
+            last_error = str(e)
+            logger.warning(
+                f"Ollama request failed for model {model_name} on {OLLAMA_HOST}: {last_error}"
+            )
+            continue
+
+        raw_content = (response.message.content or "").strip()
+        json_payload = extract_json_payload(raw_content)
+
+        try:
+            return schema.model_validate_json(json_payload)
+        except ValidationError as e:
+            coerced = coerce_structured_payload(schema, json_payload)
+            if coerced is not None:
+                return coerced
+
+            last_error = str(e)
+            last_raw_output = raw_content
+            logger.warning(
+                f"Structured output validation failed for {schema.__name__} with model {model_name}; trying fallback."
+            )
+
+    if last_raw_output:
+        logger.debug(f"Last raw LLM output from fallback chain: {last_raw_output}")
+
+    logger.error(
+        f"Structured output validation failed for {schema.__name__} after retries: {last_error}"
+    )
+    raise HTTPException(
+        status_code=502,
+        detail=f"LLM output failed {schema.__name__} schema validation",
+    )
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize and validate backend resources at startup."""
+    global _REDIS_CLIENT
     logger.info("Running startup initialization...")
     try:
         init_db()
@@ -649,6 +951,20 @@ async def lifespan(app: FastAPI):
         selected_model = get_ollama_model()
         logger.info(f"Ollama backend ready on {OLLAMA_HOST} with model {selected_model}")
         app.state.http_client = httpx.AsyncClient(timeout=HTTP_TIMEOUT)
+
+        app.state.redis_client = None
+        if REDIS_ENABLED_BY_ENV and not REDIS_IMPORT_AVAILABLE:
+            logger.warning("Redis package is not installed; continuing without cache")
+        if REDIS_ENABLED:
+            try:
+                _REDIS_CLIENT = redis_from_url(REDIS_URL, decode_responses=True)
+                await _REDIS_CLIENT.ping()
+                app.state.redis_client = _REDIS_CLIENT
+                logger.info(f"Redis cache connected at {REDIS_URL}")
+            except Exception as e:
+                _REDIS_CLIENT = None
+                logger.warning(f"Redis unavailable; continuing without cache: {str(e)}")
+
         yield
     except Exception as e:
         logger.error(f"Startup initialization failed: {str(e)}")
@@ -657,6 +973,10 @@ async def lifespan(app: FastAPI):
         client = getattr(app.state, "http_client", None)
         if client:
             await client.aclose()
+        redis_client = getattr(app.state, "redis_client", None)
+        if redis_client:
+            await redis_client.aclose()
+        _REDIS_CLIENT = None
 
 
 # Initialize FastAPI app
@@ -673,13 +993,13 @@ class CourseRecommendation(BaseModel):
     description: str
     confidence_score: float
 
-class CourseRecommendations(BaseModel):
+
+class CourseRecommendationsPayload(BaseModel):
     recommendations: list[CourseRecommendation]
+
+
+class CourseRecommendationsResponse(CourseRecommendationsPayload):
     user_id: int
-
-
-class CourseRecommendationsGeneration(BaseModel):
-    recommendations: list[CourseRecommendation]
 
 
 class ContentSection(BaseModel):
@@ -687,7 +1007,7 @@ class ContentSection(BaseModel):
     content: str
 
 
-class GeneratedActivityComponent(BaseModel):
+class ActivityBase(BaseModel):
     title: str
     description: str
     learning_objectives: list[str] = Field(default_factory=list)
@@ -698,67 +1018,61 @@ class GeneratedActivityComponent(BaseModel):
     type: Optional[str] = None
 
 
-class GeneratedSubModule(BaseModel):
+class GeneratedActivityComponent(ActivityBase):
+    pass
+
+
+class ActivityComponent(ActivityBase):
+    id: str
+
+
+class SubModuleBase(BaseModel):
     title: str
     description: str
+    estimated_duration: str = "3 hours"
+    learning_outcomes: list[str] = Field(default_factory=list)
+
+
+class GeneratedSubModule(SubModuleBase):
     activities: list[GeneratedActivityComponent]
-    estimated_duration: str = "3 hours"
-    learning_outcomes: list[str] = Field(default_factory=list)
 
 
-class GeneratedModuleActivity(BaseModel):
-    title: str
-    description: str
-    sub_modules: list[GeneratedSubModule]
-    duration: str = "1 week"
-    objectives: list[str] = Field(default_factory=list)
-    difficulty_level: Literal["beginner", "intermediate", "advanced"] = "intermediate"
-    prerequisites: list[str] = Field(default_factory=list)
-
-
-class GeneratedLearningPath(BaseModel):
-    modules: list[GeneratedModuleActivity]
-    estimated_completion_time: str = "4 weeks"
-    prerequisites: list[str] = Field(default_factory=list)
-    user_pace: str = "normal"
-    quiz_adaptations: list[str] = Field(default_factory=list)
-
-
-class ActivityComponent(BaseModel):
+class SubModule(SubModuleBase):
     id: str
-    title: str
-    description: str
-    learning_objectives: list[str] = Field(default_factory=list)
-    duration: str = "1 hour"
-    difficulty_level: Literal["beginner", "intermediate", "advanced"] = "intermediate"
-    prerequisites: list[str] = Field(default_factory=list)
-    assessment_criteria: list[str] = Field(default_factory=list)
-    type: Optional[str] = None
-
-class SubModule(BaseModel):
-    id: str
-    title: str
-    description: str
     activities: list[ActivityComponent]
-    estimated_duration: str = "3 hours"
-    learning_outcomes: list[str] = Field(default_factory=list)
 
-class ModuleActivity(BaseModel):
-    id: str
+
+class ModuleBase(BaseModel):
     title: str
     description: str
-    sub_modules: list[SubModule]
     duration: str = "1 week"
     objectives: list[str] = Field(default_factory=list)
     difficulty_level: Literal["beginner", "intermediate", "advanced"] = "intermediate"
     prerequisites: list[str] = Field(default_factory=list)
 
-class LearningPath(BaseModel):
-    modules: list[ModuleActivity]
+
+class GeneratedModuleActivity(ModuleBase):
+    sub_modules: list[GeneratedSubModule]
+
+
+class ModuleActivity(ModuleBase):
+    id: str
+    sub_modules: list[SubModule]
+
+
+class LearningPathBase(BaseModel):
     estimated_completion_time: str = "4 weeks"
     prerequisites: list[str] = Field(default_factory=list)
     user_pace: str = "normal"
     quiz_adaptations: list[str] = Field(default_factory=list)
+
+
+class GeneratedLearningPath(LearningPathBase):
+    modules: list[GeneratedModuleActivity]
+
+
+class LearningPath(LearningPathBase):
+    modules: list[ModuleActivity]
 
 class ContentItem(BaseModel):
     id: str
@@ -772,19 +1086,19 @@ class ContentItem(BaseModel):
     parent_component_id: str
 
 
-class GeneratedContentModule(BaseModel):
+class ContentModuleBase(BaseModel):
     title: str
+    learning_objectives: list[str] = Field(default_factory=list)
+    estimated_completion: str = "1 week"
+
+
+class GeneratedContentModule(ContentModuleBase):
     content: list[ContentSection]
-    learning_objectives: list[str] = Field(default_factory=list)
-    estimated_completion: str = "1 week"
 
 
-class ContentModule(BaseModel):
+class ContentModule(ContentModuleBase):
     id: str
-    title: str
     content: list[ContentItem]
-    learning_objectives: list[str] = Field(default_factory=list)
-    estimated_completion: str = "1 week"
     parent_module_id: str
 
 # Pydantic models for request validation
@@ -823,7 +1137,7 @@ def normalize_content_difficulty(level: str) -> Literal["basic", "intermediate",
 
 
 
-def init_db():
+def init_db() -> None:
     """Initialize database with updated schema"""
     logger.info("Initializing database...")
     conn = None
@@ -892,7 +1206,7 @@ def init_db():
         if conn:
             conn.close()
 
-def verify_db_schema():
+def verify_db_schema() -> bool:
     """Verify database schema and report status"""
     conn = None
     try:
@@ -948,7 +1262,7 @@ def categorize_question(question: str) -> str:
             
     return 'general'
 
-def analyze_quiz_performance(quiz_data: dict) -> dict[str, Any]:
+def analyze_quiz_performance(quiz_data: JSONDict) -> JSONDict:
     """Analyze quiz performance to identify strengths and weaknesses"""
     try:
         # Make sure we're working with the answers list
@@ -961,7 +1275,7 @@ def analyze_quiz_performance(quiz_data: dict) -> dict[str, Any]:
             }
 
         # Initialize topic performance tracking
-        topic_performance = {}
+        topic_performance: dict[str, dict[str, int]] = {}
         
         # Analyze each answer and categorize by derived topic
         for answer in answers:
@@ -976,8 +1290,8 @@ def analyze_quiz_performance(quiz_data: dict) -> dict[str, Any]:
                 topic_performance[topic]['correct'] += 1
         
         # Calculate topic scores and identify weak areas
-        topic_scores = {}
-        weak_areas = []
+        topic_scores: dict[str, float] = {}
+        weak_areas: list[str] = []
         
         for topic, data in topic_performance.items():
             if data['total'] > 0:
@@ -1019,17 +1333,20 @@ def analyze_quiz_performance(quiz_data: dict) -> dict[str, Any]:
 async def fetch_user_data(
     user_id: int,
     http_client: httpx.AsyncClient,
-) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+) -> tuple[JSONDict, JSONDict, JSONDict]:
     """Fetch and analyze user data from Spring Boot application"""
     try:
-        survey_response = await http_client.get(f"{SPRING_BOOT_API_BASE}/api/data/survey-responses")
+        survey_response, quiz_response = await asyncio.gather(
+            http_client.get(f"{SPRING_BOOT_API_BASE}/api/data/survey-responses"),
+            http_client.get(f"{SPRING_BOOT_API_BASE}/api/data/quiz-answers"),
+        )
+
         survey_response.raise_for_status()
         survey_payload = survey_response.json()
         survey_data = next((sr for sr in survey_payload if sr.get("userId") == user_id), None)
         if not survey_data:
             raise HTTPException(status_code=404, detail=f"Survey data not found for user_id {user_id}")
-        
-        quiz_response = await http_client.get(f"{SPRING_BOOT_API_BASE}/api/data/quiz-answers")
+
         quiz_response.raise_for_status()
         quiz_payload = quiz_response.json()
         quiz_data = next((qd for qd in quiz_payload if qd.get("userId") == user_id), None)
@@ -1069,11 +1386,11 @@ async def fetch_user_data(
         raise HTTPException(status_code=500, detail=str(e))
 
 def generate_course_recommendations(
-    survey_data: dict,
-    quiz_data: dict,
-    quiz_analysis: dict,
+    survey_data: JSONDict,
+    _quiz_data: JSONDict,
+    quiz_analysis: JSONDict,
     user_id: int,
-) -> dict[str, Any]:
+) -> JSONDict:
     """Generate personalized course recommendations using Ollama with structured output"""
     try:
         prompt = f"""Generate course recommendations based on:
@@ -1092,8 +1409,8 @@ def generate_course_recommendations(
         
         Return only JSON matching the provided schema.
         """
-        recommendations = call_ollama_structured(prompt, CourseRecommendationsGeneration)
-        recommendations_with_user = CourseRecommendations(
+        recommendations = call_ollama_structured(prompt, CourseRecommendationsPayload)
+        recommendations_with_user = CourseRecommendationsResponse(
             user_id=user_id,
             recommendations=recommendations.recommendations,
         )
@@ -1111,7 +1428,12 @@ def generate_component_id(prefix: str, index: int, parent_id: str = "") -> str:
         return f"{parent_id}-{prefix}{index}"
     return f"{prefix}{index}"
 
-def generate_learning_path(course: dict, user_data: dict, quiz_data: dict, quiz_analysis: dict) -> dict[str, Any]:
+def generate_learning_path(
+    course: JSONDict,
+    user_data: JSONDict,
+    _quiz_data: JSONDict,
+    quiz_analysis: JSONDict,
+) -> JSONDict:
     """Generate detailed learning path with hierarchical structure and unique IDs"""
     try:
         prompt = f"""Create a detailed hierarchical learning path for "{course['title']}" with:
@@ -1135,16 +1457,16 @@ def generate_learning_path(course: dict, user_data: dict, quiz_data: dict, quiz_
         
         Return only JSON matching the provided schema.
         """
-        path_data = call_ollama_structured(prompt, GeneratedLearningPath).model_dump()
-        processed_modules = []
+        path_data: JSONDict = call_ollama_structured(prompt, GeneratedLearningPath).model_dump()
+        processed_modules: list[JSONDict] = []
         
         for module_idx, module in enumerate(path_data['modules']):
             module_id = generate_component_id('M', module_idx + 1)
-            processed_sub_modules = []
+            processed_sub_modules: list[JSONDict] = []
             
             for sub_idx, sub_module in enumerate(module['sub_modules']):
                 sub_module_id = generate_component_id('S', sub_idx + 1, module_id)
-                processed_activities = []
+                processed_activities: list[JSONDict] = []
                 
                 for act_idx, activity in enumerate(sub_module['activities']):
                     activity_id = generate_component_id('A', act_idx + 1, sub_module_id)
@@ -1177,11 +1499,11 @@ def generate_learning_path(course: dict, user_data: dict, quiz_data: dict, quiz_
 
 def generate_course_content(
     component_id: str,
-    course: dict,
-    learning_path: dict,
-    user_data: dict,
-    quiz_analysis: dict
-) -> dict[str, Any]:
+    _course: JSONDict,
+    learning_path: JSONDict,
+    user_data: JSONDict,
+    quiz_analysis: JSONDict,
+) -> JSONDict:
     """Generate text-based content for a specific component of the learning path"""
     try:
         # Find the component in the learning path
@@ -1198,7 +1520,7 @@ def generate_course_content(
         # Find any weak areas that match the component title
         component_title = component.get('title', '').lower()
         related_weak_areas = [
-            wa for wa in quiz_analysis.get('weak_areas', [])
+            wa for wa in coerce_string_list(quiz_analysis.get('weak_areas'))
             if wa in component_title
         ]
             
@@ -1230,8 +1552,8 @@ def generate_course_content(
         Return only JSON matching the provided schema.
         """
         generated_content = call_ollama_structured(prompt, GeneratedContentModule)
-        content = generated_content.model_dump()
-        processed_content = []
+        content: JSONDict = generated_content.model_dump()
+        processed_content: list[JSONDict] = []
         
         # Ensure all content items are text type
         for idx, item in enumerate(content['content']):
@@ -1267,7 +1589,7 @@ def generate_course_content(
             detail=f"Failed to generate content: {str(e)}"
         )
 
-def find_component_by_id(learning_path: dict, component_id: str) -> Optional[dict]:
+def find_component_by_id(learning_path: JSONDict, component_id: str) -> Optional[JSONDict]:
     """Find a component in the learning path by its ID"""
     for module in learning_path['modules']:
         if module['id'] == component_id:
@@ -1303,7 +1625,8 @@ async def get_suggested_courses(user_id: int, request: Request):
             raise HTTPException(status_code=500, detail="HTTP client not initialized")
 
         survey_data, quiz_data, quiz_analysis = await fetch_user_data(user_id, http_client)
-        recommendations = generate_course_recommendations(
+        recommendations = await asyncio.to_thread(
+            generate_course_recommendations,
             survey_data,
             quiz_data,
             quiz_analysis,
@@ -1391,12 +1714,22 @@ async def get_learning_path(user_id: int, course_id: int):
                 "confidence_score": course_row[3],
             }
 
-            learning_path = generate_learning_path(
-                course,
-                user_data,
-                quiz_data,
-                quiz_analysis,
+            cache_key = build_learning_path_cache_key(course["title"])
+            learning_path, cache_hit = await get_or_compute_cached_json(
+                cache_key,
+                lambda: generate_learning_path(
+                    course,
+                    user_data,
+                    quiz_data,
+                    quiz_analysis,
+                ),
+                schema=LearningPath,
             )
+
+            if cache_hit:
+                logger.info(f"Learning path cache hit for course '{course['title']}'")
+            else:
+                logger.info(f"Learning path cache miss for course '{course['title']}'")
 
             c.execute(
                 """
@@ -1485,13 +1818,27 @@ async def get_component_content(user_id: int, course_id: int, component_id: str)
                 "description": course_row[2],
             }
 
-            content = generate_course_content(
-                component_id,
-                course,
-                learning_path,
-                user_data,
-                quiz_analysis,
+            cache_key = build_content_cache_key(course["title"], component_id)
+            content, cache_hit = await get_or_compute_cached_json(
+                cache_key,
+                lambda: generate_course_content(
+                    component_id,
+                    course,
+                    learning_path,
+                    user_data,
+                    quiz_analysis,
+                ),
+                schema=ContentModule,
             )
+
+            if cache_hit:
+                logger.info(
+                    f"Course content cache hit for course '{course['title']}' component {component_id}"
+                )
+            else:
+                logger.info(
+                    f"Course content cache miss for course '{course['title']}' component {component_id}"
+                )
 
             c.execute(
                 """

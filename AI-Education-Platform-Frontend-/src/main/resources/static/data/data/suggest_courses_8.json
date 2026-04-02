@@ -1,0 +1,51 @@
+{
+  "recommendations" : [ {
+    "id" : 49,
+    "title" : "Learning How to Learn",
+    "description" : "Master effective learning techniques and understand your learning style to improve retention and comprehension. Perfect for students who need to build foundational study skills.",
+    "confidence_score" : 0.95
+  }, {
+    "id" : 50,
+    "title" : "Introduction to Logic and Critical Thinking",
+    "description" : "Develop logical reasoning skills through structured exercises and video-based learning. Build confidence in analytical thinking essential for technology careers.",
+    "confidence_score" : 0.88
+  }, {
+    "id" : 51,
+    "title" : "Basic Mathematics for Technology Professionals",
+    "description" : "Strengthen fundamental math skills with video tutorials designed specifically for tech students. Focus on practical applications in computer science and engineering.",
+    "confidence_score" : 0.82
+  }, {
+    "id" : 52,
+    "title" : "Career Development Fundamentals",
+    "description" : "Build motivation and goal-setting skills while exploring technology career paths. Video-based curriculum helps students stay engaged and focused on advancement.",
+    "confidence_score" : 0.75
+  }, {
+    "id" : 53,
+    "title" : "Problem Solving Strategies for Tech Careers",
+    "description" : "Apply your existing problem-solving skills to real-world scenarios while building confidence in logical thinking and mathematical applications.",
+    "confidence_score" : 0.7
+  } ],
+  "user_id" : 8,
+  "quiz_performance" : {
+    "topic_scores" : {
+      "general" : 100.0,
+      "problem_solving" : 100.0,
+      "learning_style" : 0.0,
+      "logical_reasoning" : 0.0,
+      "mathematical" : 0.0,
+      "motivation" : 0.0
+    },
+    "overall_score" : 30.0,
+    "weak_areas" : [ "learning_style", "logical_reasoning", "mathematical", "motivation" ],
+    "strengths" : [ "general", "problem_solving" ],
+    "total_questions_answered" : 10,
+    "question_distribution" : {
+      "general" : 1,
+      "problem_solving" : 2,
+      "learning_style" : 2,
+      "logical_reasoning" : 2,
+      "mathematical" : 2,
+      "motivation" : 1
+    }
+  }
+}

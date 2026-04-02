@@ -1,0 +1,51 @@
+{
+  "recommendations" : [ {
+    "id" : 11,
+    "title" : "Untitled recommendation",
+    "description" : "Recommended learning option for backend learning.",
+    "confidence_score" : 0.75
+  }, {
+    "id" : 12,
+    "title" : "Untitled recommendation",
+    "description" : "Recommended learning option for backend learning.",
+    "confidence_score" : 0.75
+  }, {
+    "id" : 13,
+    "title" : "Untitled recommendation",
+    "description" : "Recommended learning option for backend learning.",
+    "confidence_score" : 0.75
+  }, {
+    "id" : 14,
+    "title" : "Untitled recommendation",
+    "description" : "Recommended learning option for backend learning.",
+    "confidence_score" : 0.75
+  }, {
+    "id" : 15,
+    "title" : "Untitled recommendation",
+    "description" : "Recommended learning option for backend learning.",
+    "confidence_score" : 0.75
+  } ],
+  "user_id" : 4,
+  "quiz_performance" : {
+    "topic_scores" : {
+      "general" : 0.0,
+      "problem_solving" : 100.0,
+      "learning_style" : 50.0,
+      "logical_reasoning" : 50.0,
+      "mathematical" : 0.0,
+      "motivation" : 0.0
+    },
+    "overall_score" : 44.44,
+    "weak_areas" : [ "general", "learning_style", "logical_reasoning", "mathematical", "motivation" ],
+    "strengths" : [ "problem_solving" ],
+    "total_questions_answered" : 9,
+    "question_distribution" : {
+      "general" : 1,
+      "problem_solving" : 2,
+      "learning_style" : 2,
+      "logical_reasoning" : 2,
+      "mathematical" : 1,
+      "motivation" : 1
+    }
+  }
+}

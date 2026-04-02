@@ -104,4 +104,105 @@
     "correct" : false,
     "questionNumber" : 10
   } ]
+}, {
+  "userId" : 4,
+  "answers" : [ {
+    "question" : "If you fold this unfolded cube, which configuration will it create?",
+    "selectedAnswer" : "/images/answer2.jpg",
+    "correct" : false,
+    "questionNumber" : 1
+  }, {
+    "question" : "Problem-Solving Approach: When faced with a complex problem, I most prefer to:",
+    "selectedAnswer" : "Break it down into smaller, manageable steps",
+    "correct" : true,
+    "questionNumber" : 2
+  }, {
+    "question" : "Learning Preference: I learn best through:",
+    "selectedAnswer" : "Watching video demonstrations",
+    "correct" : false,
+    "questionNumber" : 3
+  }, {
+    "question" : "Abstract Reasoning: If all Blargs are Zorks, and some Zorks are Morks, then:",
+    "selectedAnswer" : "Some Blargs are Morks",
+    "correct" : true,
+    "questionNumber" : 4
+  }, {
+    "question" : "Analytical Thinking: A machine produces 12 items in 3 hours. How many items will it produce in 7.5 hours?",
+    "selectedAnswer" : "28",
+    "correct" : false,
+    "questionNumber" : 5
+  }, {
+    "question" : "Motivation in Learning: What most motivates you to learn something new?",
+    "selectedAnswer" : "Career advancement opportunities",
+    "correct" : false,
+    "questionNumber" : 7
+  }, {
+    "question" : "Time Management: How do you approach a large learning project?",
+    "selectedAnswer" : "Create a detailed, step-by-step plan",
+    "correct" : true,
+    "questionNumber" : 8
+  }, {
+    "question" : "Information Processing: When learning something new, I prefer:",
+    "selectedAnswer" : "Practical, immediately applicable knowledge",
+    "correct" : true,
+    "questionNumber" : 9
+  }, {
+    "question" : "Critical Thinking: If all painters are artists, and some artists are musicians, then:",
+    "selectedAnswer" : "No painters are musicians",
+    "correct" : false,
+    "questionNumber" : 10
+  } ]
+}, {
+  "userId" : 5,
+  "answers" : [ {
+    "question" : "If you fold this unfolded cube, which configuration will it create?",
+    "selectedAnswer" : "/images/answer4.jpg",
+    "correct" : false,
+    "questionNumber" : 1
+  }, {
+    "question" : "Problem-Solving Approach: When faced with a complex problem, I most prefer to:",
+    "selectedAnswer" : "Break it down into smaller, manageable steps",
+    "correct" : true,
+    "questionNumber" : 2
+  }, {
+    "question" : "Learning Preference: I learn best through:",
+    "selectedAnswer" : "Hands-on practical experience",
+    "correct" : true,
+    "questionNumber" : 3
+  }, {
+    "question" : "Abstract Reasoning: If all Blargs are Zorks, and some Zorks are Morks, then:",
+    "selectedAnswer" : "Some Blargs are Morks",
+    "correct" : true,
+    "questionNumber" : 4
+  }, {
+    "question" : "Analytical Thinking: A machine produces 12 items in 3 hours. How many items will it produce in 7.5 hours?",
+    "selectedAnswer" : "28",
+    "correct" : false,
+    "questionNumber" : 5
+  }, {
+    "question" : "Pattern Recognition: Which number should replace the question mark? 1, 4, 9, 16, 25, ?",
+    "selectedAnswer" : "36",
+    "correct" : true,
+    "questionNumber" : 6
+  }, {
+    "question" : "Motivation in Learning: What most motivates you to learn something new?",
+    "selectedAnswer" : "Personal interest and curiosity",
+    "correct" : true,
+    "questionNumber" : 7
+  }, {
+    "question" : "Time Management: How do you approach a large learning project?",
+    "selectedAnswer" : "Create a detailed, step-by-step plan",
+    "correct" : true,
+    "questionNumber" : 8
+  }, {
+    "question" : "Information Processing: When learning something new, I prefer:",
+    "selectedAnswer" : "Practical, immediately applicable knowledge",
+    "correct" : true,
+    "questionNumber" : 9
+  }, {
+    "question" : "Critical Thinking: If all painters are artists, and some artists are musicians, then:",
+    "selectedAnswer" : "No painters are musicians",
+    "correct" : false,
+    "questionNumber" : 10
+  } ]
 } ]

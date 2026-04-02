@@ -533,7 +533,10 @@
                 courseGrid.innerHTML = '';  // Clear existing content
 
                 recommendations.forEach(course => {
-                    const confidence = Math.max(0, Math.min(100, Number(course.confidence_score || 0)));
+                    const rawConfidence = Number(course.confidence_score ?? 0);
+                    const normalizedConfidence = Number.isFinite(rawConfidence) ? rawConfidence : 0;
+                    const scaledConfidence = normalizedConfidence <= 1 ? normalizedConfidence * 100 : normalizedConfidence;
+                    const confidence = Math.max(0, Math.min(100, Math.round(scaledConfidence * 100) / 100));
                     const courseCard = document.createElement('div');
                     courseCard.className = 'course-card';
                     courseCard.setAttribute('data-course-id', course.id);
