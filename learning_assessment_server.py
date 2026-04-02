@@ -236,6 +236,354 @@ def extract_json_payload(raw_content: str) -> str:
     return payload
 
 
+def normalize_recommendations_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    """Normalize common model key variants to expected recommendations schema."""
+    if "recommendations" in payload:
+        return payload
+
+    for alt_key in (
+        "course_recommendations",
+        "courseRecommendations",
+        "recommended_courses",
+        "recommendedCourses",
+        "courses",
+        "items",
+        "results",
+    ):
+        if alt_key in payload and isinstance(payload[alt_key], list):
+            payload = {**payload, "recommendations": payload[alt_key]}
+            return payload
+
+    return payload
+
+
+def coerce_recommendations_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    """Coerce recommendation fields when model returns semantically similar keys."""
+    normalized = normalize_recommendations_payload(payload)
+    recs = normalized.get("recommendations")
+    if not isinstance(recs, list):
+        return normalized
+
+    coerced_recs: list[dict[str, Any]] = []
+    for item in recs:
+        if not isinstance(item, dict):
+            continue
+
+        description = (
+            item.get("description")
+            or item.get("focus")
+            or item.get("summary")
+            or item.get("details")
+            or f"Recommended learning option for {item.get('title', 'backend learning')}."
+        )
+
+        confidence_value = item.get("confidence_score")
+        if confidence_value is None:
+            rating = item.get("rating")
+            if isinstance(rating, (int, float)):
+                confidence_value = min(1.0, max(0.0, float(rating) / 5.0))
+            else:
+                confidence_value = 0.75
+
+        coerced_recs.append(
+            {
+                "title": item.get("title", "Untitled recommendation"),
+                "description": str(description),
+                "confidence_score": float(confidence_value),
+            }
+        )
+
+    return {**normalized, "recommendations": coerced_recs}
+
+
+def coerce_string_list(value: Any) -> list[str]:
+    """Normalize a value to a list of strings."""
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(v) for v in value if v is not None]
+    if isinstance(value, str):
+        return [value]
+    return [str(value)]
+
+
+def normalize_path_difficulty(value: Any) -> Literal["beginner", "intermediate", "advanced"]:
+    """Normalize difficulty labels to learning-path schema values."""
+    normalized = str(value).strip().lower()
+    if normalized in {"beginner", "basic", "novice", "introductory", "intro"}:
+        return "beginner"
+    if normalized in {"advanced", "expert"}:
+        return "advanced"
+    return "intermediate"
+
+
+def normalize_learning_path_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    """Normalize common model output variants to GeneratedLearningPath schema."""
+    if isinstance(payload.get("learningPath"), dict):
+        payload = {**payload, **payload["learningPath"]}
+
+    if "modules" not in payload:
+        for alt_key in (
+            "learning_path",
+            "learningPath",
+            "course_path",
+            "coursePath",
+            "path",
+            "phases",
+            "stages",
+        ):
+            if isinstance(payload.get(alt_key), list):
+                payload = {**payload, "modules": payload[alt_key]}
+                break
+
+    modules = payload.get("modules")
+    if modules is None:
+        for alt_key in ("plan", "roadmap"):
+            if isinstance(payload.get(alt_key), list):
+                modules = payload[alt_key]
+                payload = {**payload, "modules": modules}
+                break
+
+    if not isinstance(modules, list):
+        return payload
+
+    processed_modules: list[dict[str, Any]] = []
+    for module in modules:
+        if not isinstance(module, dict):
+            continue
+
+        sub_modules = module.get("sub_modules")
+        if not isinstance(sub_modules, list):
+            for alt_key in ("subModules", "submodules", "sections", "sub_topics", "topics"):
+                if isinstance(module.get(alt_key), list):
+                    sub_modules = module[alt_key]
+                    break
+        if not isinstance(sub_modules, list):
+            sub_modules = []
+
+        processed_sub_modules: list[dict[str, Any]] = []
+        for sub_module in sub_modules:
+            if not isinstance(sub_module, dict):
+                continue
+
+            activities = sub_module.get("activities")
+            if not isinstance(activities, list):
+                for alt_key in ("tasks", "lessons", "items", "exercises"):
+                    if isinstance(sub_module.get(alt_key), list):
+                        activities = sub_module[alt_key]
+                        break
+            if activities is None:
+                # If no nested activities are provided, treat the sub-module itself as one activity.
+                activities = [
+                    {
+                        "title": sub_module.get("title")
+                        or sub_module.get("name")
+                        or "Practice",
+                        "description": sub_module.get("description")
+                        or sub_module.get("summary")
+                        or "Learning activity",
+                        "difficulty_level": sub_module.get("difficulty")
+                        or sub_module.get("difficulty_level"),
+                    }
+                ]
+            if not isinstance(activities, list):
+                activities = []
+
+            processed_activities: list[dict[str, Any]] = []
+            for activity in activities:
+                if not isinstance(activity, dict):
+                    continue
+                processed_activities.append(
+                    {
+                        "title": str(
+                            activity.get("title")
+                            or activity.get("name")
+                            or activity.get("activity_title")
+                            or activity.get("task")
+                            or "Activity"
+                        ),
+                        "description": str(
+                            activity.get("description")
+                            or activity.get("summary")
+                            or activity.get("details")
+                            or activity.get("content")
+                            or "Activity details"
+                        ),
+                        "learning_objectives": coerce_string_list(
+                            activity.get("learning_objectives")
+                            or activity.get("objectives")
+                            or activity.get("outcomes")
+                        ),
+                        "duration": str(activity.get("duration") or "1 hour"),
+                        "difficulty_level": normalize_path_difficulty(
+                            activity.get("difficulty_level") or activity.get("difficulty")
+                        ),
+                        "prerequisites": coerce_string_list(activity.get("prerequisites")),
+                        "assessment_criteria": coerce_string_list(
+                            activity.get("assessment_criteria")
+                            or activity.get("assessmentCriteria")
+                            or activity.get("success_criteria")
+                        ),
+                        "type": activity.get("type"),
+                    }
+                )
+
+            processed_sub_modules.append(
+                {
+                    "title": str(
+                        sub_module.get("title")
+                        or sub_module.get("name")
+                        or sub_module.get("sub_module_title")
+                        or "Sub-module"
+                    ),
+                    "description": str(
+                        sub_module.get("description")
+                        or sub_module.get("summary")
+                        or sub_module.get("overview")
+                        or "Sub-module details"
+                    ),
+                    "activities": processed_activities,
+                    "estimated_duration": str(
+                        sub_module.get("estimated_duration") or sub_module.get("duration") or "3 hours"
+                    ),
+                    "learning_outcomes": coerce_string_list(
+                        sub_module.get("learning_outcomes")
+                        or sub_module.get("outcomes")
+                        or sub_module.get("objectives")
+                    ),
+                }
+            )
+
+        processed_modules.append(
+            {
+                "title": str(
+                    module.get("title") or module.get("name") or module.get("module_title") or "Module"
+                ),
+                "description": str(
+                    module.get("description")
+                    or module.get("summary")
+                    or module.get("overview")
+                    or "Module details"
+                ),
+                "sub_modules": processed_sub_modules,
+                "duration": str(module.get("duration") or module.get("estimated_duration") or "1 week"),
+                "objectives": coerce_string_list(
+                    module.get("objectives") or module.get("learning_objectives") or module.get("outcomes")
+                ),
+                "difficulty_level": normalize_path_difficulty(
+                    module.get("difficulty_level") or module.get("difficulty")
+                ),
+                "prerequisites": coerce_string_list(module.get("prerequisites")),
+            }
+        )
+
+    if not processed_modules and isinstance(payload.get("modules"), list):
+        # Last-resort coercion: map string modules into simple structures.
+        for raw_module in payload["modules"]:
+            if isinstance(raw_module, str):
+                processed_modules.append(
+                    {
+                        "title": raw_module,
+                        "description": raw_module,
+                        "sub_modules": [
+                            {
+                                "title": "Core topics",
+                                "description": raw_module,
+                                "activities": [
+                                    {
+                                        "title": "Study",
+                                        "description": raw_module,
+                                        "learning_objectives": [],
+                                        "duration": "1 hour",
+                                        "difficulty_level": "intermediate",
+                                        "prerequisites": [],
+                                        "assessment_criteria": [],
+                                        "type": "text",
+                                    }
+                                ],
+                                "estimated_duration": "3 hours",
+                                "learning_outcomes": [],
+                            }
+                        ],
+                        "duration": "1 week",
+                        "objectives": [],
+                        "difficulty_level": "intermediate",
+                        "prerequisites": [],
+                    }
+                )
+
+    return {
+        **payload,
+        "modules": processed_modules,
+        "estimated_completion_time": str(
+            payload.get("estimated_completion_time")
+            or payload.get("estimatedCompletionTime")
+            or payload.get("completion_time")
+            or "4 weeks"
+        ),
+        "prerequisites": coerce_string_list(payload.get("prerequisites")),
+        "user_pace": str(payload.get("user_pace") or payload.get("userPace") or "normal"),
+        "quiz_adaptations": coerce_string_list(
+            payload.get("quiz_adaptations") or payload.get("quizAdaptations")
+        ),
+    }
+
+
+def normalize_content_module_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    """Normalize common model output variants to GeneratedContentModule schema."""
+    if "content" not in payload:
+        for alt_key in ("sections", "content_sections", "contentSections", "lessons", "items"):
+            if isinstance(payload.get(alt_key), list):
+                payload = {**payload, "content": payload[alt_key]}
+                break
+
+    content_sections = payload.get("content")
+    if not isinstance(content_sections, list):
+        content_sections = []
+
+    processed_sections: list[dict[str, str]] = []
+    for section in content_sections:
+        if not isinstance(section, dict):
+            continue
+
+        section_title = str(
+            section.get("title") or section.get("heading") or section.get("name") or "Section"
+        )
+        section_body = section.get("content") or section.get("body") or section.get("description") or section.get("text")
+
+        if not section_body:
+            parts: list[str] = []
+            for key in (
+                "explanation",
+                "details",
+                "example",
+                "key_takeaways",
+                "takeaways",
+                "reflection_questions",
+                "practice_questions",
+            ):
+                value = section.get(key)
+                if isinstance(value, list):
+                    parts.append("\n".join(str(v) for v in value if v is not None))
+                elif value is not None:
+                    parts.append(str(value))
+            section_body = "\n\n".join(p for p in parts if p).strip() or "Content section."
+
+        processed_sections.append({"title": section_title, "content": str(section_body)})
+
+    return {
+        **payload,
+        "title": str(payload.get("title") or payload.get("module_title") or payload.get("name") or "Generated Content"),
+        "content": processed_sections,
+        "learning_objectives": coerce_string_list(
+            payload.get("learning_objectives") or payload.get("objectives")
+        ),
+        "estimated_completion": str(
+            payload.get("estimated_completion") or payload.get("estimatedCompletion") or payload.get("duration") or "1 week"
+        ),
+    }
+
+
 def call_ollama_structured(prompt: str, schema: type[TModel]) -> TModel:
     """Call Ollama with JSON schema and validate with Pydantic."""
     model_name = get_ollama_model()
@@ -256,6 +604,28 @@ def call_ollama_structured(prompt: str, schema: type[TModel]) -> TModel:
     try:
         return schema.model_validate_json(json_payload)
     except ValidationError as e:
+        if schema is CourseRecommendationsGeneration:
+            try:
+                raw_obj = json.loads(json_payload)
+                coerced_obj = coerce_recommendations_payload(raw_obj)
+                return schema.model_validate(coerced_obj)
+            except (ValueError, ValidationError):
+                pass
+        if schema is GeneratedLearningPath:
+            try:
+                raw_obj = json.loads(json_payload)
+                coerced_obj = normalize_learning_path_payload(raw_obj)
+                return schema.model_validate(coerced_obj)
+            except (ValueError, ValidationError):
+                pass
+        if schema is GeneratedContentModule:
+            try:
+                raw_obj = json.loads(json_payload)
+                coerced_obj = normalize_content_module_payload(raw_obj)
+                return schema.model_validate(coerced_obj)
+            except (ValueError, ValidationError):
+                pass
+
         logger.error(f"Structured output validation failed for {schema.__name__}: {str(e)}")
         logger.debug(f"Raw LLM output from {model_name}: {raw_content}")
         raise HTTPException(
