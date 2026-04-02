@@ -11,7 +11,7 @@ from typing import Any, Literal, Optional, TypeVar
 import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
-from ollama import chat
+from ollama import Client
 from pydantic import BaseModel, Field, ValidationError
 
 # Register the adapter
@@ -19,9 +19,24 @@ sqlite3.register_adapter(datetime, lambda x: x.isoformat())
 
 DB_PATH = Path(__file__).resolve().with_name("learning_data.db")
 SPRING_BOOT_API_BASE = os.getenv("SPRING_BOOT_API_BASE", "http://localhost:8084")
-OLLAMA_API_BASE = os.getenv("OLLAMA_API_BASE", "http://localhost:11434")
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "https://ollama.com").rstrip("/")
+OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL")
-OLLAMA_MODEL_CANDIDATES_16GB = (
+OLLAMA_DIRECT_CLOUD_MODEL_CANDIDATES = (
+    "gpt-oss:20b",
+    "gpt-oss:120b",
+    "deepseek-v3.1:671b",
+    "qwen3-coder:480b",
+    "kimi-k2:1t",
+)
+OLLAMA_LOCAL_CLOUD_MODEL_CANDIDATES = (
+    "gpt-oss:20b-cloud",
+    "gpt-oss:120b-cloud",
+    "deepseek-v3.1:671b-cloud",
+    "qwen3-coder:480b-cloud",
+    "kimi-k2:1t-cloud",
+)
+OLLAMA_LOCAL_MODEL_CANDIDATES_16GB = (
     "qwen3:8b",
     "qwen2.5:7b-instruct",
     "qwen2.5:7b",
@@ -38,6 +53,7 @@ MODEL_DISCOVERY_TIMEOUT = httpx.Timeout(5.0, connect=3.0)
 MODEL_SIZE_PATTERN = re.compile(r"(\d+(?:\.\d+)?)b", re.IGNORECASE)
 TModel = TypeVar("TModel", bound=BaseModel)
 _SELECTED_OLLAMA_MODEL: Optional[str] = None
+_OLLAMA_CLIENT: Optional[Client] = None
 try:
     OLLAMA_NUM_CTX = int(os.getenv("OLLAMA_NUM_CTX", "4096"))
 except ValueError:
@@ -113,39 +129,84 @@ def score_model_for_16gb(model_name: str) -> float:
     return family_score + size_score + quality_hints
 
 
+def get_ollama_client() -> Client:
+    """Get or create Ollama client (cloud-first, local fallback via OLLAMA_HOST)."""
+    global _OLLAMA_CLIENT
+    if _OLLAMA_CLIENT is None:
+        if OLLAMA_HOST.endswith("ollama.com") and not OLLAMA_API_KEY:
+            raise RuntimeError(
+                "OLLAMA_API_KEY is required when using Ollama Cloud host. "
+                "Set OLLAMA_API_KEY or switch OLLAMA_HOST to a local Ollama server."
+            )
+
+        headers: dict[str, str] = {}
+        if OLLAMA_API_KEY:
+            headers["Authorization"] = f"Bearer {OLLAMA_API_KEY}"
+
+        if headers:
+            _OLLAMA_CLIENT = Client(host=OLLAMA_HOST, headers=headers)
+        else:
+            _OLLAMA_CLIENT = Client(host=OLLAMA_HOST)
+
+    return _OLLAMA_CLIENT
+
+
 def discover_ollama_models() -> list[str]:
-    """Discover locally available Ollama models."""
+    """Discover available Ollama models from configured host."""
+    headers: dict[str, str] = {}
+    if OLLAMA_API_KEY:
+        headers["Authorization"] = f"Bearer {OLLAMA_API_KEY}"
+
     try:
-        response = httpx.get(f"{OLLAMA_API_BASE}/api/tags", timeout=MODEL_DISCOVERY_TIMEOUT)
+        response = httpx.get(
+            f"{OLLAMA_HOST}/api/tags",
+            headers=headers or None,
+            timeout=MODEL_DISCOVERY_TIMEOUT,
+        )
         response.raise_for_status()
         payload = response.json()
         models = payload.get("models", [])
         return [m["name"] for m in models if isinstance(m, dict) and m.get("name")]
     except (httpx.HTTPError, ValueError) as e:
-        logger.warning(f"Failed to discover Ollama models from {OLLAMA_API_BASE}: {str(e)}")
+        logger.warning(f"Failed to discover Ollama models from {OLLAMA_HOST}: {str(e)}")
         return []
 
 
 def resolve_ollama_model() -> str:
-    """Pick the best available local Ollama model for quality/performance on 16GB RAM."""
+    """Pick best configured Ollama model with cloud-first preference."""
     if OLLAMA_MODEL:
         logger.info(f"Using OLLAMA_MODEL override: {OLLAMA_MODEL}")
         return OLLAMA_MODEL
 
     available_models = discover_ollama_models()
     if not available_models:
-        fallback_model = "qwen2.5:7b-instruct"
+        fallback_model = "gpt-oss:20b"
         logger.warning(
-            f"Could not discover local models; falling back to {fallback_model}. "
+            f"Could not discover models from {OLLAMA_HOST}; falling back to {fallback_model}. "
             "Set OLLAMA_MODEL to override."
         )
         return fallback_model
 
     available_lookup = {name.lower(): name for name in available_models}
-    for preferred in OLLAMA_MODEL_CANDIDATES_16GB:
+    if OLLAMA_HOST.endswith("ollama.com"):
+        for preferred in OLLAMA_DIRECT_CLOUD_MODEL_CANDIDATES:
+            match = available_lookup.get(preferred.lower())
+            if match:
+                return match
+    else:
+        for preferred in OLLAMA_LOCAL_CLOUD_MODEL_CANDIDATES:
+            match = available_lookup.get(preferred.lower())
+            if match:
+                return match
+
+    for preferred in OLLAMA_LOCAL_MODEL_CANDIDATES_16GB:
         match = available_lookup.get(preferred.lower())
         if match:
             return match
+
+    cloud_models = [m for m in available_models if "-cloud" in m.lower()]
+    if cloud_models:
+        return cloud_models[0]
 
     return max(available_models, key=score_model_for_16gb)
 
@@ -155,7 +216,9 @@ def get_ollama_model() -> str:
     global _SELECTED_OLLAMA_MODEL
     if _SELECTED_OLLAMA_MODEL is None:
         _SELECTED_OLLAMA_MODEL = resolve_ollama_model()
-        logger.info(f"Selected Ollama model: {_SELECTED_OLLAMA_MODEL}")
+        logger.info(
+            f"Selected Ollama model: {_SELECTED_OLLAMA_MODEL} on host {OLLAMA_HOST}"
+        )
     return _SELECTED_OLLAMA_MODEL
 
 
@@ -176,12 +239,17 @@ def extract_json_payload(raw_content: str) -> str:
 def call_ollama_structured(prompt: str, schema: type[TModel]) -> TModel:
     """Call Ollama with JSON schema and validate with Pydantic."""
     model_name = get_ollama_model()
-    response = chat(
-        messages=[{"role": "user", "content": prompt}],
-        model=model_name,
-        format=schema.model_json_schema(),
-        options={"temperature": 0.1, "num_ctx": OLLAMA_NUM_CTX},
-    )
+    try:
+        client = get_ollama_client()
+        response = client.chat(
+            model=model_name,
+            messages=[{"role": "user", "content": prompt}],
+            format=schema.model_json_schema(),
+            options={"temperature": 0.1, "num_ctx": OLLAMA_NUM_CTX},
+        )
+    except Exception as e:
+        logger.error(f"Ollama request failed for model {model_name} on {OLLAMA_HOST}: {str(e)}")
+        raise HTTPException(status_code=502, detail=f"Ollama request failed: {str(e)}")
 
     raw_content = response.message.content
     json_payload = extract_json_payload(raw_content)
@@ -207,6 +275,9 @@ async def lifespan(app: FastAPI):
         else:
             logger.error("Database schema verification failed")
             raise RuntimeError("Database initialization failed")
+        get_ollama_client()
+        selected_model = get_ollama_model()
+        logger.info(f"Ollama backend ready on {OLLAMA_HOST} with model {selected_model}")
         app.state.http_client = httpx.AsyncClient(timeout=HTTP_TIMEOUT)
         yield
     except Exception as e:
@@ -341,7 +412,7 @@ class GeneratedContentModule(BaseModel):
 class ContentModule(BaseModel):
     id: str
     title: str
-    content: list[ContentSection]
+    content: list[ContentItem]
     learning_objectives: list[str] = Field(default_factory=list)
     estimated_completion: str = "1 week"
     parent_module_id: str
